@@ -1,23 +1,21 @@
+#!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-# Form implementation generated from reading ui file 'items.ui'
-#
-# Created by: PyQt5 UI code generator 5.5.1
-#
-# WARNING! All changes made in this file will be lost!
+# The GUI class for car items
 
 from PyQt5 import QtCore, QtGui, QtWidgets
-from RcCarClient import DroneConnect
-from rc_car_msgs.msg import Diagnostics
-from enum import Enum
 
-mode_list = ("ALTCTL","OFFBOARD", "STABILIZED", "AUTO_RTL", "AUTO_LOITER", "POSCTL")
+from RcCarClient import CarConnect
+from rc_car_msgs.msg import Diagnostics
+
 
 Color = {"RED": 0,"GREEN": 1, "YELLOW": 2}
 
-
 class Ui(QtWidgets.QWidget):
     def __init__(self, name, rc_car, parent=None):
+        """
+        Init GUI elements
+        """
         super(QtWidgets.QWidget,self).__init__(parent)
 
         self.car_client = rc_car
@@ -102,13 +100,6 @@ class Ui(QtWidgets.QWidget):
         self.portEdit.setObjectName("portEdit")
         self.horizontalLayout_3.addWidget(self.portEdit)
         self.ItemLayout.addLayout(self.horizontalLayout_3, 1, 1, 1, 1)
-        # self.ModeComboBox = QtWidgets.QComboBox(self.gridLayoutWidget)
-        # self.ModeComboBox.setMaximumSize(QtCore.QSize(128, 16777215))
-        # font = QtGui.QFont()
-        # font.setFamily("Roboto")
-        # self.ModeComboBox.setFont(font)
-        # self.ModeComboBox.setObjectName("ModeComboBox")
-        # self.ItemLayout.addWidget(self.ModeComboBox, 1, 3, 1, 1)
         self.ArmButton = QtWidgets.QPushButton(self.gridLayoutWidget)
         self.ArmButton.setMaximumSize(QtCore.QSize(84, 16777215))
         font = QtGui.QFont()
@@ -187,10 +178,60 @@ class Ui(QtWidgets.QWidget):
 
         self.setLayout(self.ItemLayout)
 
-        self.set_text()
-        self.initSlots()
+        self._set_text()
+        self._init_slots()
 
-    def set_text(self):
+    """
+    Public functions for GUI elements
+    """
+    def setIp(self):
+        data = self.ipEdit.toPlainText()
+        self.car_client.ws.setIp(data)
+
+    def setPort(self):
+        data = self.portEdit.toPlainText()
+        self.car_client.ws.setPort(data)
+
+    def connectBtn(self):
+        """
+        Connect to server
+        :type: self.car_client
+        """
+        if not self.car_client.is_active():
+            print("not connect")
+            self.car_client.ws.connect()
+            return
+
+        if self.car_client.is_active():
+            self.car_client.ws.disconnect()
+            return
+
+    def armBtn(self):
+
+        if not self.car_client.is_active():
+            print("not connect return")
+            return
+        if self.car_client.diagnostics.armed:
+            self.car_client.disarm()
+        else:
+            self.car_client.arm()
+
+    """
+    Private functiond
+    """
+    def _init_slots(self):
+        self.portEdit.setText(str(self.car_client.ws._port))
+        self.ipEdit.setText(str(self.car_client.ws._ip))
+
+        self.ConnectButton.clicked.connect(self.connectBtn)
+        self.ArmButton.clicked.connect(self.armBtn)
+        self.ipEdit.textChanged.connect(self.setIp)
+        self.portEdit.textChanged.connect(self.setPort)
+
+        self.car_client.diag_signals.connect(self._getDiag)
+        self.car_client.ws.connect_signal.connect(self._changeConnect)
+
+    def _set_text(self):
         _translate = QtCore.QCoreApplication.translate
         self.GpsCheckBox.setText(_translate("MainWindow", "gps"))
         self.HomeCheckBox.setText(_translate("MainWindow", "home"))
@@ -203,20 +244,6 @@ class Ui(QtWidgets.QWidget):
 
         self.ipEdit.setText(str(self.car_client.ws._ip))
         self.portEdit.setText(str(self.car_client.ws._port))
-
-    def initSlots(self):
-        self.portEdit.setText(str(self.car_client.ws._port))
-        self.ipEdit.setText(str(self.car_client.ws._ip))
-
-        self.ConnectButton.clicked.connect(self.connect)
-        self.ArmButton.clicked.connect(self.arm)
-        self.ipEdit.textChanged.connect(self.setIp)
-        self.portEdit.textChanged.connect(self.setPort)
-
-        # self.ModeComboBox.addItems(mode_list)
-        # self.ModeComboBox.activated[str].connect(self.setMode)
-        self.car_client.diag_signals.connect(self._getDiag)
-        self.car_client.ws.connect_signal.connect(self._changeConnect)
 
     def _getDiag(self):
         self._changeGuiElem(self.car_client.diagnostics)
@@ -269,43 +296,9 @@ class Ui(QtWidgets.QWidget):
         palette.setColor(QtGui.QPalette.Base, colorBg)
         self.widget.setPalette(palette)
 
-    def setMode(self, mode):
-        self.car_client.set_mode(mode)
 
-    # def changeComboBox(self, mode):
-    #     self.ModeComboBox.setCurrentText(mode)
-
-    def setIp(self):
-        data = self.ipEdit.toPlainText()
-        self.car_client.ws.setIp(data)
-
-    def setPort(self):
-        data = self.portEdit.toPlainText()
-        self.car_client.ws.setPort(data)
-
-    def connect(self):
-        """
-        Connect to server
-        :type: self.car_client
-        """
-        if not self.car_client.is_active():
-            print("not connect")
-            self.car_client.ws.connect()
-            return
-
-        if self.car_client.is_active():
-            self.car_client.ws.disconnect()
-            return
-
-    def arm(self):
-
-        if not self.car_client.is_active():
-            print("not connect return")
-            return
-        if self.car_client.diagnostics.armed:
-            self.car_client.disarm()
-        else:
-            self.car_client.arm()
-
+    """
+    Delete class
+    """
     def __del__(self):
         self.car_client.__del__()

@@ -8,14 +8,13 @@ from PyQt5 import QtWidgets, QtGui
 from PyQt5.QtWidgets import QApplication, QWidget, QCheckBox
 from PyQt5.QtCore import QObject, pyqtSignal,  QRunnable, QThread, QThreadPool, pyqtSlot, Qt
 import carUI, window
-from RcCarClient import DroneConnect
+from RcCarClient import CarConnect
 from sensor_msgs.msg import NavSatFix
 import json
 
-mode_list = ("ALTCTL","OFFBOARD", "STABILIZED", "AUTO_RTL", "AUTO_LOITER", "POSCTL")
 common_ip = "127.0.0.1"
 common_port = 9090
-droneList = list()
+robotsList = list()
 
 tag = "car_"
 
@@ -32,17 +31,14 @@ class WindowApp(QtWidgets.QMainWindow, window.Ui_Form):
         self.setupUi(self)  # Это нужно для инициализации нашего дизайна
 
         # init signals
-        self.addButton.clicked.connect(self.addItems)
-        self.dellButton.clicked.connect(self.delItems)
-        self.ArmAllButton.clicked.connect(self.ArmAll)
-        self.DisarmAllButton.clicked.connect(self.DisarmAll)
-        self.ConnectAllButton.clicked.connect(self.ConnectAll)
-        self.DisconnectAllButton.clicked.connect(self.DisconnectAll)
+        self.addButton.clicked.connect(self.addItems_btn)
+        self.dellButton.clicked.connect(self.delItems__btn)
+        self.ArmAllButton.clicked.connect(self.armAll_btn)
+        self.DisarmAllButton.clicked.connect(self.disarmAll_btn)
+        self.ConnectAllButton.clicked.connect(self.connectAll_btn)
+        self.DisconnectAllButton.clicked.connect(self.disconnectAll_btn)
 
-        # self.ModeAllComboBox.addItems(mode_list)
-        # self.ModeAllComboBox.activated[str].connect(self.setAllMode)
-
-        self.OriginPushButton.clicked.connect(self.setOrigin)
+        self.OriginPushButton.clicked.connect(self.setOrigin_btn)
         self.LatSpinBox.valueChanged.connect(self._changeOrigin)
         self.LonSpinBox.valueChanged.connect(self._changeOrigin)
         self.AltSpinBox.valueChanged.connect(self._changeOrigin)
@@ -50,8 +46,13 @@ class WindowApp(QtWidgets.QMainWindow, window.Ui_Form):
         self.SaveParamsButton.clicked.connect(self._save_params)
         self.LoadParamsButton.clicked.connect(self._load_params)
 
+    """
+    Auxiliary function
+
+    """
+
     def _load_params(self):
-        path = self.open_dialog()
+        path = self.open_dialog_bnt()
         if path == "":
             return
 
@@ -71,7 +72,7 @@ class WindowApp(QtWidgets.QMainWindow, window.Ui_Form):
         self.AltSpinBox.setValue(alt)
 
         #clear list of drone
-        self.delListOfDrone()
+        self.delListOfRobots_btn()
         size = json.loads(json_data)['size']
 
         for i in range(size):
@@ -79,17 +80,17 @@ class WindowApp(QtWidgets.QMainWindow, window.Ui_Form):
             ip = json.loads(json_data)[tag+str(i)]['ip']
             port = json.loads(json_data)[tag + str(i)]['port']
 
-            droneClient = DroneConnect(ip, port, name)
-            droneList.append(droneClient)
+            droneClient = CarConnect(ip, port, name)
+            robotsList.append(droneClient)
             item_widget = carUI.Ui("%s%s" % (tag, i), droneClient)
-            self.item = QtWidgets.QListWidgetItem(self.listOfDrones)
+            self.item = QtWidgets.QListWidgetItem(self.listOfRobots)
             self.item.setSizeHint(item_widget.sizeHint())
-            self.listOfDrones.addItem(self.item)
-            self.listOfDrones.setItemWidget(self.item, item_widget)
+            self.listOfRobots.addItem(self.item)
+            self.listOfRobots.setItemWidget(self.item, item_widget)
 
     def _save_params(self):
-        global droneList, origin_pose
-        path = self.save_dialog()
+        global robotsList, origin_pose
+        path = self.save_dialog_btn()
         if path == "":
             return
         origin = {}
@@ -99,13 +100,13 @@ class WindowApp(QtWidgets.QMainWindow, window.Ui_Form):
 
         doc = {}
         doc["origin"] = origin
-        doc["size"] = len(droneList)
+        doc["size"] = len(robotsList)
 
-        for i in range(len(droneList)):
+        for i in range(len(robotsList)):
             drone = {}
-            drone['name'] = droneList[i].name
-            drone['ip'] = droneList[i].ws._ip
-            drone['port'] = droneList[i].ws._port
+            drone['name'] = robotsList[i].name
+            drone['ip'] = robotsList[i].ws._ip
+            drone['port'] = robotsList[i].ws._port
             doc[str(tag)+str(i)] = drone
 
         json_data = json.dumps(doc)
@@ -113,25 +114,6 @@ class WindowApp(QtWidgets.QMainWindow, window.Ui_Form):
         file.write(json_data)
         file.close()
         print("Params save to: %s" %path)
-
-    def save_dialog(self):
-        options = QtWidgets.QFileDialog.Options()
-        options |= QtWidgets.QFileDialog.DontUseNativeDialog
-        fileName, param = QtWidgets.QFileDialog.getSaveFileName(self, "Save of drone list", "",
-                                                                "Drone params (*.params);;All Files (*)", options=options)
-        filter = ''
-        if param.find('Drone params (*.params)') != -1 :
-            filter =".params"
-
-        return fileName+filter
-
-    def open_dialog(self):
-        options = QtWidgets.QFileDialog.Options()
-        options |= QtWidgets.QFileDialog.DontUseNativeDialog
-        fileName = ""
-        fileName, _ = QtWidgets.QFileDialog.getOpenFileName(self, "QFileDialog.getOpenFileName()", "",
-                                                            "Drone params (*.params);;All Files (*)", options=options)
-        return fileName
 
     def _changeOrigin(self):
         """
@@ -146,12 +128,31 @@ class WindowApp(QtWidgets.QMainWindow, window.Ui_Form):
         origin_pose.latitude = Lat
         origin_pose.longitude = Lon
         origin_pose.altitude = Alt
-        # print("=======\n"
-        #       "Lat: %s\n"
-        #       "Lon: %s\n"
-        #       "Alt: %s" % (Lat, Lon, Alt))
 
-    def setOrigin(self):
+    """
+    GUI elements
+    """
+
+    def save_dialog_btn(self):
+        options = QtWidgets.QFileDialog.Options()
+        options |= QtWidgets.QFileDialog.DontUseNativeDialog
+        fileName, param = QtWidgets.QFileDialog.getSaveFileName(self, "Save of drone list", "",
+                                                                "Drone params (*.params);;All Files (*)", options=options)
+        filter = ''
+        if param.find('Drone params (*.params)') != -1 :
+            filter =".params"
+
+        return fileName+filter
+
+    def open_dialog_bnt(self):
+        options = QtWidgets.QFileDialog.Options()
+        options |= QtWidgets.QFileDialog.DontUseNativeDialog
+        fileName = ""
+        fileName, _ = QtWidgets.QFileDialog.getOpenFileName(self, "QFileDialog.getOpenFileName()", "",
+                                                            "Drone params (*.params);;All Files (*)", options=options)
+        return fileName
+
+    def setOrigin_btn(self):
         """
         push button set origin data
         :return:
@@ -167,90 +168,76 @@ class WindowApp(QtWidgets.QMainWindow, window.Ui_Form):
                            origin_pose.altitude))
 
         origin_pose.header.stamp = rospy.Time.now()
-        for drone in droneList:
-            if drone.is_active():
-                drone.set_origin(origin_topic, origin_pose)
+        for robot in robotsList:
+            if robot.is_active():
+                robot.set_origin(origin_topic, origin_pose)
 
-    def ConnectAll(self):
+    def connectAll_btn(self):
         print("connect all")
-        for drone in droneList:
-            if not drone.is_active():
-                drone.connect()
+        for robot in robotsList:
+            if not robot.is_active():
+                robot.connect()
 
-    def DisconnectAll(self):
+    def disconnectAll_btn(self):
         print("disconnect all")
 
-        for drone in droneList:
-            if drone.is_active():
-                drone.disconnect()
+        for robot in robotsList:
+            if robot.is_active():
+                robot.disconnect()
 
-    def ArmAll(self):
+    def armAll_btn(self):
         print("ArmAll")
-        for drone in droneList:
-            drone.arm()
+        for robot in robotsList:
+            robot.arm()
 
-    def DisarmAll(self):
+    def disarmAll_btn(self):
         print("disarm all")
-        global droneList
+        global robotsList
 
-        for drone in droneList:
-            drone.disarm()
+        for robot in robotsList:
+            robot.disarm()
 
-    def setAllMode(self, mode):
-        print("set mode all: %s" %mode)
-        global droneList
-
-        for i in range(self.listOfDrones.count()):
-            drone = self.listOfDrones.itemWidget(self.listOfDrones.item(i))
-            drone.setMode(mode)
-            drone.changeComboBox(mode)
-
-    def addItems(self):
+    def addItems_btn(self):
         """
         :type droneList: list(
         """
-        global droneList
+        global robotsList
 
-        droneClient = DroneConnect(common_ip, common_port, "%s%s" % (tag, len(droneList)))
-        droneList.append(droneClient)
+        robotClient = CarConnect(common_ip, common_port, "%s%s" % (tag, len(robotsList)))
+        robotsList.append(robotClient)
 
-        item_widget = carUI.Ui("%s%s" % (tag, len(self.listOfDrones)), droneClient)
-        self.item = QtWidgets.QListWidgetItem(self.listOfDrones)
+        item_widget = carUI.Ui("%s%s" % (tag, len(self.listOfRobots)), robotClient)
+        self.item = QtWidgets.QListWidgetItem(self.listOfRobots)
         self.item.setSizeHint(item_widget.sizeHint())
-        self.listOfDrones.addItem(self.item)
-        self.listOfDrones.setItemWidget(self.item, item_widget)
-        print("addItems:",len(self.listOfDrones))
+        self.listOfRobots.addItem(self.item)
+        self.listOfRobots.setItemWidget(self.item, item_widget)
+        print("addItems:",len(self.listOfRobots))
 
-    def delItems(self):
-        global droneList
+    def delItems__btn(self):
+        global robotsList
 
-        if self.listOfDrones.currentRow() < 0:
+        if self.listOfRobots.currentRow() < 0:
             return
-        droneList[self.listOfDrones.currentRow()].disconnect()
-        del droneList[self.listOfDrones.currentRow()]
-        self.listOfDrones.takeItem(self.listOfDrones.currentRow())
-        print("del: %d : len: %d" %(self.listOfDrones.currentRow(), len(droneList)))
+        robotsList[self.listOfRobots.currentRow()].disconnect()
+        del robotsList[self.listOfRobots.currentRow()]
+        self.listOfRobots.takeItem(self.listOfRobots.currentRow())
+        print("del: %d : len: %d" % (self.listOfRobots.currentRow(), len(robotsList)))
 
-    def delListOfDrone(self):
-        global droneList
+    def delListOfRobots_btn(self):
+        global robotsList
 
-        if len(droneList) == 0:
-            print("List is empty:", len(droneList))
+        if len(robotsList) == 0:
+            print("List is empty:", len(robotsList))
             return
 
-        for i in range(len(droneList)-1,-1,-1):
-            droneList[i].disconnect()
-            del droneList[i]
-            self.listOfDrones.takeItem(i)
-            print("del: %d : len: %d" % (i, len(droneList)))
+        for i in range(len(robotsList) - 1, -1, -1):
+            robotsList[i].disconnect()
+            del robotsList[i]
+            self.listOfRobots.takeItem(i)
+            print("del: %d : len: %d" % (i, len(robotsList)))
         print("List is clear:")
 
-
 class ROS_run(QObject):
-    # def __init__(self):
-    #     super(ROS_run, self).__init_()
-    #     print("thead ros start")
-
     @pyqtSlot()
     def run(self):
         rate = rospy.Rate(20)
@@ -261,21 +248,19 @@ class ROS_run(QObject):
         except:
             pass
 
-
-
 if __name__ == '__main__':
     rospy.init_node('swarm_server_node', anonymous=True)
 
-    # run ros thread
+    # Run ROS in the thread
     ros_t = QThread()
     ros_ = ROS_run()
     ros_.moveToThread(ros_t)
     ros_t.started.connect(ros_.run)
     ros_t.start()
 
-    # run main
-    app = QtWidgets.QApplication(sys.argv)  # Новый экземпляр QApplication
-    window = WindowApp()  # Создаём объект класса ExampleApp
-    window.show()  # Показываем окно
-    app.exec_()  # и запускаем приложение
+    # Run server
+    app = QtWidgets.QApplication(sys.argv)
+    window = WindowApp()    # Create windows of class ExampleApp
+    window.show()           # Show window
+    app.exec_()             # exit
     abortFlag = True

@@ -1,4 +1,4 @@
-# ros_swarm_control
+# ros swarm control
 The ROS package to control the swarm of robots on the base px4 with data transmission through [Rosbridge](http://wiki.ros.org/rosbridge_suite).
 
 # Branch:

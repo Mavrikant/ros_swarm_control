@@ -5,7 +5,7 @@ import sys
 import rospy
 from rospy_websocker_client import WebsocketROSClient as ros_ws
 
-from geometry_msgs.msg import  PoseStamped
+from geometry_msgs.msg import PoseStamped, Twist
 # from mavros_msgs.srv import SetModeRequest, CommandBoolRequest
 from std_srvs.srv import SetBool, SetBoolRequest
 
@@ -13,7 +13,6 @@ from sensor_msgs.msg import BatteryState, LaserScan
 from rc_car_msgs.msg import Diagnostics
 from PyQt5.QtCore import QObject, QThread, pyqtSignal, pyqtSlot
 from sensor_msgs.msg import NavSatFix
-from drone_msgs.msg import Goal
 
 class DroneConnect(QObject):
 
@@ -35,9 +34,9 @@ class DroneConnect(QObject):
 
         # Ros subscribe
         self.sub_diagnoctics = rospy.Subscriber(name+"/diagnostics", Diagnostics, self.clb_diag)
-        self.sub_goal = rospy.Subscriber(name+"/geo/goal_pose", Goal, self.goal_clb_global)
-        self.sub_goal = rospy.Subscriber(name+"/local/goal_pose", Goal, self.goal_clb_local)
-
+        self.sub_goal = rospy.Subscriber(name+"/geo/goal_pose", PoseStamped, self.goal_clb_global)
+        self.sub_goal = rospy.Subscriber(name+"/local/goal_pose", PoseStamped, self.goal_clb_local)
+        self.sub_goal = rospy.Subscriber(name + "/cmd_vel", Twist, self.cmd_vel_clb)
 
     def connect(self):
         self.ws.connect()
@@ -65,6 +64,15 @@ class DroneConnect(QObject):
         :return:
         """
         self.ws.publish("/geo/goal_pose", data)
+
+    def cmd_vel_clb(self,data):
+        """
+        Set cmd vel to car
+        :type data: Twist
+        :return:
+        """
+        self.ws.publish("/cmd_vel", data)
+
 
     def clb_diag(self, data):
         """

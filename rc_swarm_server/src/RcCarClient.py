@@ -9,7 +9,7 @@ import rospy
 from rospy_websocker_client import WebsocketROSClient as ros_ws
 from PyQt5.QtCore import QObject, QThread, pyqtSignal, pyqtSlot
 
-from geometry_msgs.msg import PoseStamped, Twist
+from geometry_msgs.msg import PoseStamped, Twist, TwistStamped
 from std_srvs.srv import SetBool, SetBoolRequest
 from sensor_msgs.msg import BatteryState, LaserScan
 from sensor_msgs.msg import NavSatFix
@@ -36,6 +36,9 @@ class CarConnect(QObject):
         self.ws.subscribe('/diagnostics', Diagnostics(), name+"/diagnostics")
         self.ws.subscribe('/mavros/global_position/global', NavSatFix(), name+"/global/pose")
         self.ws.subscribe('/scan', LaserScan(), name+"/scan")
+        self.ws.subscribe('/mavros/local_position/velocity', TwistStamped(), name + "/velocity")
+
+
 
         ## Subscribe to Ros topics and publish through Rosbridge server
         self.sub_diagnoctics = rospy.Subscriber(name+"/diagnostics", Diagnostics, self.clb_diag)

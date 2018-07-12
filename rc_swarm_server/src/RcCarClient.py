@@ -39,8 +39,7 @@ class CarConnect(QObject):
 
         ## Subscribe to Ros topics and publish through Rosbridge server
         self.sub_diagnoctics = rospy.Subscriber(name+"/diagnostics", Diagnostics, self.clb_diag)
-        self.sub_goal = rospy.Subscriber(name+"/geo/goal_pose", PoseStamped, self.goal_clb_global)
-        self.sub_goal = rospy.Subscriber(name+"/local/goal_pose", PoseStamped, self.goal_clb_local)
+        self.sub_goal = rospy.Subscriber(name+"/goal", PoseStamped, self.goal_clb_global)
         self.sub_goal = rospy.Subscriber(name + "/cmd_vel", Twist, self.cmd_vel_clb)
 
     """
@@ -81,7 +80,7 @@ class CarConnect(QObject):
         :type data: PoseStamped
         :return:
         """
-        self.ws.publish("/goal_pose", data)
+        self.ws.publish("/goal", data)
 
     def goal_clb_global(self, data):
         """

@@ -1,0 +1,16 @@
+# set offset of drones
+
+size: 2
+
+drone_0:
+  x: 0.0
+  y: 1.0
+  z: 0.0
+
+drone_1:
+  x: 1.0
+  y: 0.0
+  z: 0.0
+
+
+

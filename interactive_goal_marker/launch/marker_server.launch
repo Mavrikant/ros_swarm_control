@@ -1,0 +1,14 @@
+<launch>
+
+	<!-- start  marker_server_node -->
+	<node pkg="interactive_goal" name="marker_server_node" type="marker_server" 	respawn="true" output="screen">
+		<!-- <remap from="/goal_pose" to="/drone_0/local/goal_pose"/> -->
+	</node>
+	
+
+	<node pkg="interactive_goal" name="swarm_marker_node" type="swarm_marker.py" 	respawn="true" output="screen">
+			<param name="param" value="$(find interactive_goal)/param/config.yaml"/>
+			<param name="max_vel" value="0.5"/>
+	</node>
+
+</launch>

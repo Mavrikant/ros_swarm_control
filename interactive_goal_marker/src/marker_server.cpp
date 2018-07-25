@@ -2,16 +2,15 @@
 #include <interactive_markers/interactive_marker_server.h>
 #include <tf/transform_broadcaster.h>
 #include <tf/tf.h>
-#include <geometry_msgs/PoseStamped.h>
-
+#include <drone_msgs/Goal.h>
 
 using namespace visualization_msgs;
-using namespace geometry_msgs;
+using namespace drone_msgs;
 
 // Global variables
 boost::shared_ptr<interactive_markers::InteractiveMarkerServer> server;
 ros::Publisher goal_pub;
-PoseStamped goal;
+Goal goal;
 
 double getYawFromQuat(geometry_msgs::Quaternion quat)
 {
@@ -24,9 +23,18 @@ double getYawFromQuat(geometry_msgs::Quaternion quat)
 }
 
 
+void updateGoal(geometry_msgs::Pose pose)
+{
+  goal.ctr_type = Goal::POSE;
+  goal.pose.point.x = pose.position.x;
+  goal.pose.point.y = pose.position.y;
+  goal.pose.point.z = pose.position.z;
+  goal.pose.course = getYawFromQuat(pose.orientation);
+}
+
 void processFeedback( const visualization_msgs::InteractiveMarkerFeedbackConstPtr &feedback )
 {
-  goal.pose = feedback->pose;
+  updateGoal(feedback->pose);
   server->applyChanges();
 }
 
@@ -83,11 +91,17 @@ void makeQuadrocopterMarker( const tf::Vector3& position)
   server->setCallback(int_marker.name, &processFeedback);
 }
 
-void goalUpdateCb(PoseStamped goal_)
+void goalUpdateCb(Goal goal_)
 {
-  goal.pose = goal_.pose;
-  server->setPose("goal_pose", goal_.pose);
+  geometry_msgs::Pose pose;
+  pose.position.x = goal_.pose.point.x;
+  pose.position.y = goal_.pose.point.y;
+  pose.position.z = goal_.pose.point.z;
+  tf::Quaternion q = tf::createQuaternionFromYaw(goal_.pose.course);
+  tf::quaternionTFToMsg(q, pose.orientation);
+  server->setPose("goal_pose", pose);
   server->applyChanges();
+  goal = goal_;
 }
 
 
@@ -96,8 +110,8 @@ int main(int argc, char** argv)
   // Init ROS node
   ros::init(argc, argv, "marker_server");
   ros::NodeHandle n;
-  goal_pub = n.advertise<PoseStamped>("/goal", 1000);
-  ros::Subscriber goal_sub = n.subscribe("/goal", 10, &goalUpdateCb);
+  goal_pub = n.advertise<Goal>("/goal_pose", 1000);
+  ros::Subscriber goal_sub = n.subscribe("/goal_pose", 10, &goalUpdateCb);
 
   // Init marker server
   server.reset( new interactive_markers::InteractiveMarkerServer("basic_controls","",false) );
@@ -105,14 +119,11 @@ int main(int argc, char** argv)
   makeQuadrocopterMarker(tf::Vector3(0, 0, 0));
   server->applyChanges();
 
-  ros::Rate loop_rate(30);
+  ros::Rate loop_rate(10);
 
   while (ros::ok())
   {
-      goal.header.frame_id = "map";
-      goal.header.stamp = ros::Time::now();
       goal_pub.publish(goal);
-
       ros::spinOnce();
       loop_rate.sleep();
   }

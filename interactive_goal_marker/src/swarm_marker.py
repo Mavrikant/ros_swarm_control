@@ -13,8 +13,9 @@ import yaml
 # ---------------------------------------------------------------------------------------------------------------------
 # ---------- Global params
 tag = "drone_"
-max_vel = 1.0
+max_vel = 0.2
 
+free_zone = 1.
 size_of_drone = 0
 
 param_path = "config.yaml"
@@ -23,6 +24,7 @@ drone_offset_list = list() #[name :str, offset :Point, prevPoint: Goal]
 markers_goal = MarkerArray()
 markers_lerp = MarkerArray()
 
+state_init_flag = False
 
 def setup_market(name,point, id, colorRGBA):
     """
@@ -72,9 +74,8 @@ def speed_limit(new_goal,prev_goal, dt, max_speed):
            new_goal.pose.point.z - prev_goal.pose.point.z]
 
     dist = np.linalg.norm(vec)
-    print("vel:", dist)
 
-    if dist/dt > max_speed:
+    if dist > max_speed:
         res = vec / dist * max_speed * dt
         limit_goal.pose.point.x = res[0] + prev_goal.pose.point.x
         limit_goal.pose.point.y = res[1] + prev_goal.pose.point.y
@@ -90,21 +91,35 @@ def goal_clb(data):
     :type data:Goal
     :return:
     """
-    global goal_common_msgs, drone_offset_list,markers_lerp, markers_goal, old_time
+    global goal_common_msgs, drone_offset_list,markers_lerp, markers_goal, old_time, state_init_flag
 
     goal_common_msgs = data
 
     drone_goal_msgs = Goal()
     name = ""
     dt = rospy.get_time() - old_time
-    for i in range(len(drone_offset_list)):
-        name_of_drone = drone_offset_list[i][0]
 
+    # Перебираем массив всех дронов
+    for i in range(len(drone_offset_list)):
+
+        name_of_drone = drone_offset_list[i][0]
+        # получаем целевую точку куда нужно двигаться
         drone_goal_msgs = rotate_vect(goal_common_msgs.pose.point, drone_offset_list[i][1], goal_common_msgs.pose.course)
         drone_goal_msgs.pose.course = data.pose.course
-        lerp_goal = speed_limit(drone_goal_msgs, drone_offset_list[i][2], dt, max_vel)
-        lerp_goal.pose.course = data.pose.course
+        # Интерполируем точку от текущей до целевой
+        if state_init_flag:
+            lerp_goal = speed_limit(drone_goal_msgs, drone_offset_list[i][2], dt, max_vel)
+            lerp_goal.pose.course = data.pose.course
+        else:
+            lerp_goal = drone_goal_msgs
 
+        # отталкиваемся от соседей
+        repel_vec = repel_from_near(lerp_goal, i, free_zone)
+
+        lerp_goal.pose.point.x += repel_vec[0] * dt * 1.5
+        lerp_goal.pose.point.y += repel_vec[1] * dt * 1.5
+        lerp_goal.pose.point.z += repel_vec[2] * dt * 1.5
+        # указываем интерполированную точку как предыдущую
         drone_offset_list[i][2] = lerp_goal
 
         markers_lerp.markers[i] = setup_market(name_of_drone,
@@ -120,6 +135,41 @@ def goal_clb(data):
     pub_marker_goal_array.publish(markers_goal)
     pub_marker_goal_lerp_array.publish(markers_lerp)
     old_time = rospy.get_time()
+    state_init_flag = True
+
+def repel_from_near(lerp_point, drone_num, radius = 1.0):
+    """
+    Отталкиваемся от дронов если они возши в заданный радиус
+    :param name:
+    :param list:
+    :return:
+    """
+    repel = [0.0, 0.0, 0.0]
+
+    for i in range(len(drone_offset_list)):
+        if drone_offset_list[i][0] != drone_offset_list[drone_num][0]:
+            dist,vec = get_distance(lerp_point, drone_offset_list[i][2])
+
+            if dist < radius:
+                # print("%s -> %s. dist:%s, vec:%s" % (drone_offset_list[drone_num][0],drone_offset_list[i][0],dist, vec))
+                repel[0] += vec[0]
+                repel[1] += vec[1] + 0.2
+                repel[2] += vec[2]
+    return repel
+
+def get_distance(a, b):
+    """
+    Distance between 2 GOAL
+    :type a: Goal
+    :type b: Goal
+    :return: float
+    """
+    vec = [a.pose.point.x-b.pose.point.x,
+                           a.pose.point.y - b.pose.point.y,
+                           a.pose.point.z - b.pose.point.z]
+
+    return np.linalg.norm(vec), vec
+
 
 def rotate_vect(a,b,rot):
     """
@@ -144,22 +194,12 @@ def rotate_vect(a,b,rot):
     res = np.dot(rotate,pos)
     res[0] += a.x
     res[1] += a.y
-    new_goal.pose.point.x = res[0]
-    new_goal.pose.point.y = res[1]
-    new_goal.pose.point.z = a.z + b.z
-    new_goal.pose.course = rot
+    new_goal.pose.point.x = float(res[0])
+    new_goal.pose.point.y = float(res[1])
+    new_goal.pose.point.z = float(a.z + b.z)
+    new_goal.pose.course = float(rot)
     return new_goal
-    # try:
-    #     normVec = val / np.linalg.norm(val) * dist
-    #
-    # except:
-    #     normVec = [b.pose.point.x,b.pose.point.y]
 
-
-    # b.pose.point.x = normVec[0]
-    # b.pose.point.y = normVec[1]
-
-    # return b
 
 def get_drone_pose(common_goal, offset):
 

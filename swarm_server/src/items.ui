@@ -317,7 +317,7 @@ p, li { white-space: pre-wrap; }
          </property>
          <property name="sizeHint" stdset="0">
           <size>
-           <width>40</width>
+           <width>20</width>
            <height>20</height>
           </size>
          </property>
@@ -805,6 +805,13 @@ p, li { white-space: pre-wrap; }
        </property>
       </widget>
      </item>
+     <item row="0" column="5">
+      <widget class="QLabel" name="GPSStateLabel">
+       <property name="text">
+        <string>TextLabel</string>
+       </property>
+      </widget>
+     </item>
     </layout>
    </widget>
   </widget>
@@ -814,7 +821,7 @@ p, li { white-space: pre-wrap; }
      <x>0</x>
      <y>0</y>
      <width>674</width>
-     <height>29</height>
+     <height>22</height>
     </rect>
    </property>
   </widget>

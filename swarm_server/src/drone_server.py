@@ -3,17 +3,8 @@
 
 import sys
 import rospy
-from rospy_websocker_client import WebsocketROSClient as ros_ws
 
-from geometry_msgs.msg import  PoseStamped
-from drone_msgs.msg import Goal
-from tf2_msgs.msg import TFMessage
-from mavros_msgs.srv import SetModeRequest, CommandBoolRequest
-
-from sensor_msgs.msg import BatteryState
-from drone_msgs.msg import Diagnostics
 from PyQt5 import QtWidgets, QtGui
-from PyQt5.QtWidgets import QApplication, QWidget, QCheckBox
 from PyQt5.QtCore import QObject, pyqtSignal,  QRunnable, QThread, QThreadPool, pyqtSlot, Qt
 import DroneUI, window
 from DroneClient import DroneConnect

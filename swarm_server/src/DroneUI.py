@@ -9,6 +9,7 @@
 from PyQt5 import QtCore, QtGui, QtWidgets
 from DroneClient import DroneConnect
 from drone_msgs.msg import Diagnostics
+from sensor_msgs.msg import NavSatStatus
 from enum import Enum
 
 mode_list = ("ALTCTL","OFFBOARD", "STABILIZED", "AUTO_RTL", "AUTO_LOITER", "POSCTL")
@@ -174,6 +175,9 @@ class Ui(QtWidgets.QWidget):
         self.OriginCheckBox.setObjectName("OriginCheckBox")
         self.ItemLayout.addWidget(self.OriginCheckBox, 0, 2, 1, 1)
 
+        self.GPSStateLabel = QtWidgets.QLabel(self.gridLayoutWidget)
+        self.GPSStateLabel.setObjectName("GPSStateLabel")
+        self.ItemLayout.addWidget(self.GPSStateLabel, 0, 5, 1, 1)
 
         self.widget = QtWidgets.QWidget(self.gridLayoutWidget)
 
@@ -200,6 +204,8 @@ class Ui(QtWidgets.QWidget):
         self.BatteryTextLabel.setText(_translate("MainWindow", "bat:"))
         self.Batterylabel.setText(_translate("MainWindow", "100%"))
         self.OriginCheckBox.setText(_translate("MainWindow", "origin"))
+        self.GPSStateLabel.setText(_translate("MainWindow", "gps: none"))
+
 
         self.ipEdit.setText(str(self.drone_client.ws._ip))
         self.portEdit.setText(str(self.drone_client.ws._port))
@@ -229,6 +235,21 @@ class Ui(QtWidgets.QWidget):
         # combo box
         self.changeComboBox(diag_data.mode)
         self.Batterylabel.setText('{0:.0%}'.format(diag_data.battery))
+
+        if diag_data.gps_send:
+            text = ""
+            if diag_data.status.status == NavSatStatus.STATUS_FIX:
+                text = "FIX"
+            if diag_data.status.status == NavSatStatus.STATUS_GBAS_FIX:
+                text = "GBAS_FIX"
+            if diag_data.status.status == NavSatStatus.STATUS_NO_FIX:
+                text = "NO_FIX"
+            if diag_data.status.status == NavSatStatus.STATUS_SBAS_FIX:
+                text = "SBAS_FIX"
+
+            self.GPSStateLabel.setText(text)
+        else:
+            self.GPSStateLabel.setText("gps: none")
 
         # arm button
         armText = "Arm" if not diag_data.armed else "disarm"

@@ -3,6 +3,7 @@
 
 import sys
 import rospy
+
 from rospy_websocker_client import WebsocketROSClient as ros_ws
 
 from geometry_msgs.msg import PoseStamped
@@ -27,13 +28,13 @@ class DroneConnect(QObject):
         self.ws = ros_ws.ws_client(self.ip, self.port)
         self.ws.subscribe('/mavros/local_position/pose', PoseStamped(), name+"/local/pose")
         self.ws.subscribe('/geo/local_pose', PoseStamped(), name+"/geo/local_pose")
-        self.ws.subscribe('/diagnostics', Diagnostics(), name+"/diagnostics")
+        self.ws.subscribe('/drone/diagnostics', Diagnostics(), name+"/diagnostics")
         self.ws.subscribe('/mavros/global_position/global', NavSatFix(), name+"/global/pose")
 
         # Ros subscribe
         self.sub_diagnoctics = rospy.Subscriber(name+"/diagnostics", Diagnostics, self.clb_diag)
-        self.sub_goal = rospy.Subscriber(name+"/geo/goal_pose", PoseStamped, self.goal_clb_global)
-        self.sub_goal = rospy.Subscriber(name+"/local/goal_pose", PoseStamped, self.goal_clb_local)
+        self.sub_geo_goal = rospy.Subscriber(name+"/geo/goal_pose", PoseStamped, self.goal_clb_global)
+        # self.sub_goal = rospy.Subscriber(name+"/local/goal_pose", PoseStamped, self.goal_clb_local)
 
 
     def connect(self):
@@ -41,7 +42,8 @@ class DroneConnect(QObject):
 
     def disconnect(self):
         self.sub_diagnoctics.unregister()
-        self.sub_goal.unregister()
+        # self.sub_goal.unregister()
+        self.sub_geo_goal.unregister()
         self.ws.disconnect()
 
     def __del__(self):

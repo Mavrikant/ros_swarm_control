@@ -13,9 +13,8 @@ import yaml
 # ---------------------------------------------------------------------------------------------------------------------
 # ---------- Global params
 tag = "drone_"
-max_vel = 0.2
+max_vel = 0.5
 
-free_zone = 1.
 size_of_drone = 0
 
 param_path = "config.yaml"
@@ -25,6 +24,14 @@ markers_goal = MarkerArray()
 markers_lerp = MarkerArray()
 
 state_init_flag = False
+
+# Параметры планировщика
+r_drone = 0.4                   # радиус дрона
+r_man = 0.4                     # запас на маневр
+r_kor = 0.6                     # коридор нулевых сил
+r_porog = r_drone + r_man       # дальность действия поля отталкивания
+c_rep = 0.4                     # коэффициент ф-ии отталкивания
+
 
 def setup_market(name,point, id, colorRGBA):
     """
@@ -58,7 +65,27 @@ def setup_market(name,point, id, colorRGBA):
 
     return marker
 
-def speed_limit(new_goal,prev_goal, dt, max_speed):
+def rotate_vect(a, b, rot):
+    """
+    Поворачиваем b относительно a на угол rot
+    :type a: list
+    :type b: list
+    :type rot: float
+    :type dist: float
+    :return: возвращаем точку повёрнутую на нужный угол
+
+    """
+    rotate = np.array([[math.cos(-rot), -math.sin(-rot)],
+                       [math.sin(-rot), math.cos(-rot)]])
+
+    pos = np.array([[a[0]],
+                    [a[1]]])
+    val = np.dot(rotate, pos)
+    val[0] += b[0]
+    val[1] += b[1]
+    return [val[0][0], val[1][0], 0.]
+
+def speed_limit_goal(new_goal,prev_goal, dt, max_speed):
     """
 
     :type prev_goal: Goal
@@ -75,7 +102,7 @@ def speed_limit(new_goal,prev_goal, dt, max_speed):
 
     dist = np.linalg.norm(vec)
 
-    if dist > max_speed:
+    if dist > max_vel*dt:
         res = vec / dist * max_speed * dt
         limit_goal.pose.point.x = res[0] + prev_goal.pose.point.x
         limit_goal.pose.point.y = res[1] + prev_goal.pose.point.y
@@ -84,6 +111,37 @@ def speed_limit(new_goal,prev_goal, dt, max_speed):
 
     else:
         return new_goal
+
+def speed_limit_vec(new_goal, prev_goal, dt, max_speed):
+    """
+
+    :type prev_goal: Goal
+    :type _goal: Goal
+    :param dt: float
+    :param max_speed: float
+    :return: limit goal
+    """
+    limit_goal = [0.,0.,0.]
+
+    vec = [new_goal[0] - prev_goal[0],
+           new_goal[1] - prev_goal[1],
+           new_goal[2] - prev_goal[2]]
+
+    dist = np.linalg.norm(vec)
+
+    if dist > max_vel*dt:
+        res = vec / dist * max_speed * dt
+        limit_goal[0] = res[0] + prev_goal[0]
+        limit_goal[1] = res[1] + prev_goal[1]
+        limit_goal[2] = res[2] + prev_goal[2]
+        return limit_goal
+
+    else:
+        return new_goal
+
+def rep_force(dist_to_obs):
+    # вида 1/х
+    return c_rep / dist_to_obs - c_rep / r_porog
 
 def goal_clb(data):
     """
@@ -104,21 +162,21 @@ def goal_clb(data):
 
         name_of_drone = drone_offset_list[i][0]
         # получаем целевую точку куда нужно двигаться
-        drone_goal_msgs = rotate_vect(goal_common_msgs.pose.point, drone_offset_list[i][1], goal_common_msgs.pose.course)
+        drone_goal_msgs = rotate_goal(goal_common_msgs.pose.point, drone_offset_list[i][1], goal_common_msgs.pose.course)
         drone_goal_msgs.pose.course = data.pose.course
         # Интерполируем точку от текущей до целевой
         if state_init_flag:
-            lerp_goal = speed_limit(drone_goal_msgs, drone_offset_list[i][2], dt, max_vel)
+            lerp_goal = speed_limit_goal(drone_goal_msgs, drone_offset_list[i][2], dt, max_vel)
             lerp_goal.pose.course = data.pose.course
         else:
             lerp_goal = drone_goal_msgs
 
         # отталкиваемся от соседей
-        repel_vec = repel_from_near(lerp_goal, i, free_zone)
-
-        lerp_goal.pose.point.x += repel_vec[0] * dt * 1.5
-        lerp_goal.pose.point.y += repel_vec[1] * dt * 1.5
-        lerp_goal.pose.point.z += repel_vec[2] * dt * 1.5
+        repel_vec = speed_limit_vec(repel_from_near(lerp_goal, i, r_porog),[0,0,0], dt, max_vel)
+        repel_rot_vec = rotate_vect(repel_vec, [0,0,0], np.deg2rad(-25))
+        lerp_goal.pose.point.x += repel_rot_vec[0]
+        lerp_goal.pose.point.y += repel_rot_vec[1]
+        lerp_goal.pose.point.z += repel_rot_vec[2]
         # указываем интерполированную точку как предыдущую
         drone_offset_list[i][2] = lerp_goal
 
@@ -152,9 +210,9 @@ def repel_from_near(lerp_point, drone_num, radius = 1.0):
 
             if dist < radius:
                 # print("%s -> %s. dist:%s, vec:%s" % (drone_offset_list[drone_num][0],drone_offset_list[i][0],dist, vec))
-                repel[0] += vec[0]
-                repel[1] += vec[1] + 0.2
-                repel[2] += vec[2]
+                repel[0] += vec[0] * rep_force(dist)
+                repel[1] += vec[1] * rep_force(dist)
+                repel[2] += vec[2] * rep_force(dist)
     return repel
 
 def get_distance(a, b):
@@ -171,7 +229,7 @@ def get_distance(a, b):
     return np.linalg.norm(vec), vec
 
 
-def rotate_vect(a,b,rot):
+def rotate_goal(a,b,rot):
     """
     Поворачиваем b относительно a на угол rot
     :type a: Point

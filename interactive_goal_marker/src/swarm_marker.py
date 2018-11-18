@@ -83,7 +83,7 @@ def rotate_vect(a, b, rot):
     val = np.dot(rotate, pos)
     val[0] += b[0]
     val[1] += b[1]
-    return [val[0][0], val[1][0], 0.]
+    return [val[0][0], val[1][0], a[0]]
 
 def speed_limit_goal(new_goal,prev_goal, dt, max_speed):
     """
@@ -171,9 +171,12 @@ def goal_clb(data):
         else:
             lerp_goal = drone_goal_msgs
 
+        # get course
+        course = get_course(drone_goal_msgs, lerp_goal)
+
         # отталкиваемся от соседей
-        repel_vec = speed_limit_vec(repel_from_near(lerp_goal, i, r_porog),[0,0,0], dt, max_vel)
-        repel_rot_vec = rotate_vect(repel_vec, [0,0,0], np.deg2rad(-25))
+        repel_vec = speed_limit_vec(repel_from_near(lerp_goal, i,course, r_porog), [0,0,0], dt, max_vel)
+        repel_rot_vec = rotate_vect(repel_vec, [0,0,0],np.deg2rad(-25))
         lerp_goal.pose.point.x += repel_rot_vec[0]
         lerp_goal.pose.point.y += repel_rot_vec[1]
         lerp_goal.pose.point.z += repel_rot_vec[2]
@@ -195,7 +198,7 @@ def goal_clb(data):
     old_time = rospy.get_time()
     state_init_flag = True
 
-def repel_from_near(lerp_point, drone_num, radius = 1.0):
+def repel_from_near(lerp_point, drone_num,course, radius = 1.0):
     """
     Отталкиваемся от дронов если они возши в заданный радиус
     :param name:
@@ -207,12 +210,18 @@ def repel_from_near(lerp_point, drone_num, radius = 1.0):
     for i in range(len(drone_offset_list)):
         if drone_offset_list[i][0] != drone_offset_list[drone_num][0]:
             dist,vec = get_distance(lerp_point, drone_offset_list[i][2])
-
             if dist < radius:
+                if abs(course) <= np.deg2rad(90):
+                    dir = 1.0
+                else:
+                    dir = -1.0
                 # print("%s -> %s. dist:%s, vec:%s" % (drone_offset_list[drone_num][0],drone_offset_list[i][0],dist, vec))
                 repel[0] += vec[0] * rep_force(dist)
                 repel[1] += vec[1] * rep_force(dist)
-                repel[2] += vec[2] * rep_force(dist)
+                if vec[2] == 0.:
+                    repel[2] += max_vel * rep_force(dist) * dir
+                else:
+                    repel[2] += vec[2] * rep_force(dist) * dir
     return repel
 
 def get_distance(a, b):
@@ -228,6 +237,17 @@ def get_distance(a, b):
 
     return np.linalg.norm(vec), vec
 
+def get_course(target_goal, current_goal):
+    """
+    :type target_goal: Goal
+    :type current_goal: Goal
+    :return:
+    """
+    vec = [target_goal.pose.point.x - current_goal.pose.point.x,
+           target_goal.pose.point.y - current_goal.pose.point.y]
+
+    res = math.atan2(vec[1], vec[0])
+    return res
 
 def rotate_goal(a,b,rot):
     """

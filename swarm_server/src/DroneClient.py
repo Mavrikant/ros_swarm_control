@@ -10,7 +10,7 @@ from geometry_msgs.msg import PoseStamped
 from mavros_msgs.srv import SetModeRequest, CommandBoolRequest
 
 from sensor_msgs.msg import BatteryState
-from drone_msgs.msg import Diagnostics
+from drone_msgs.msg import Diagnostics, Goal
 from PyQt5.QtCore import QObject, QThread, pyqtSignal, pyqtSlot
 from sensor_msgs.msg import NavSatFix
 
@@ -33,7 +33,7 @@ class DroneConnect(QObject):
 
         # Ros subscribe
         self.sub_diagnoctics = rospy.Subscriber(name+"/diagnostics", Diagnostics, self.clb_diag)
-        self.sub_geo_goal = rospy.Subscriber(name+"/geo/goal_pose", PoseStamped, self.goal_clb_global)
+        self.sub_geo_goal = rospy.Subscriber(name+"/geo/goal_pose", Goal, self.goal_clb_global)
         # self.sub_goal = rospy.Subscriber(name+"/local/goal_pose", PoseStamped, self.goal_clb_local)
 
 
@@ -61,7 +61,7 @@ class DroneConnect(QObject):
     def goal_clb_global(self, data):
         """
         Get goal pose
-        :type data: PoseStamped
+        :type data: Goal
         :return:
         """
         self.ws.publish("/geo/goal_pose", data)

@@ -101,7 +101,6 @@ void goalUpdateCb(Goal goal_)
   tf::quaternionTFToMsg(q, pose.orientation);
   server->setPose("goal_pose", pose);
   server->applyChanges();
-  goal = goal_;
 }
 
 
@@ -119,7 +118,7 @@ int main(int argc, char** argv)
   makeQuadrocopterMarker(tf::Vector3(0, 0, 0));
   server->applyChanges();
 
-  ros::Rate loop_rate(10);
+  ros::Rate loop_rate(30);
 
   while (ros::ok())
   {

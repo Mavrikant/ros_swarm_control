@@ -21,6 +21,8 @@ class Ui(QtWidgets.QWidget):
     def __init__(self, name, drone, parent=None):
         super(QtWidgets.QWidget,self).__init__(parent)
 
+        self.ready_to_start = False
+
         self.drone_client = drone
         self.name = name
         self.centralwidget = QtWidgets.QWidget()
@@ -236,6 +238,11 @@ class Ui(QtWidgets.QWidget):
         self.changeComboBox(diag_data.mode)
         self.Batterylabel.setText('{0:.0%}'.format(diag_data.battery))
 
+        if self.ready_to_start:
+            self._changeColorStateOfItem(Color["GREEN"])
+        else:
+            self._changeColorStateOfItem(Color["YELLOW"])
+
         if diag_data.gps_send:
             text = ""
             if diag_data.status.status == NavSatStatus.STATUS_FIX:
@@ -262,10 +269,15 @@ class Ui(QtWidgets.QWidget):
         if diag_data.init_origin != self.OriginCheckBox.isChecked():
             self.OriginCheckBox.click()
 
-        if diag_data.init_home and diag_data.gps_send and diag_data.init_origin:
-            self._changeColorStateOfItem(Color["GREEN"])
+        # change color
+        if diag_data.init_home \
+                and diag_data.gps_send \
+                and diag_data.init_origin \
+                and diag_data.status.status == NavSatStatus.STATUS_FIX:
+            self.ready_to_start = True
         else:
-            self._changeColorStateOfItem(Color["YELLOW"])
+            self.ready_to_start = False
+
 
     def _changeConnect(self, state):
 

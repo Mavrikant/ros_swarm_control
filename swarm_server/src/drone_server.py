@@ -244,7 +244,6 @@ class WindowApp(QtWidgets.QMainWindow, window.Ui_Form):
             print("del: %d : len: %d" % (i, len(robotsList)))
         print("List is clear:")
 
-
 class ROS_run(QObject):
     # def __init__(self):
     #     super(ROS_run, self).__init_()
@@ -259,8 +258,6 @@ class ROS_run(QObject):
                 rate.sleep()
         except:
             pass
-
-
 
 if __name__ == '__main__':
     rospy.init_node('swarm_server_node', anonymous=True)

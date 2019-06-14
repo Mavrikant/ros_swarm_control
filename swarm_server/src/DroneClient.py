@@ -57,7 +57,6 @@ class DroneConnect(QObject):
         """
         self.ws.publish("/goal_pose", data)
 
-
     def goal_clb_global(self, data):
         """
         Get goal pose

@@ -324,6 +324,13 @@ p, li { white-space: pre-wrap; }
         </spacer>
        </item>
        <item>
+        <widget class="QPushButton" name="OriginButton">
+         <property name="text">
+          <string>get origin</string>
+         </property>
+        </widget>
+       </item>
+       <item>
         <widget class="QLabel" name="BatteryTextLabel">
          <property name="maximumSize">
           <size>

@@ -151,8 +151,14 @@ class Ui(QtWidgets.QWidget):
         self.NameLabel_2.setFont(font)
         self.NameLabel_2.setObjectName("NameLabel_2")
         self.horizontalLayout.addWidget(self.NameLabel_2)
-        spacerItem1 = QtWidgets.QSpacerItem(40, 20, QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Minimum)
+        spacerItem1 = QtWidgets.QSpacerItem(20, 20, QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Minimum)
         self.horizontalLayout.addItem(spacerItem1)
+        self.OriginButton = QtWidgets.QPushButton(self.gridLayoutWidget)
+        self.OriginButton.setObjectName("OriginButton")
+        self.horizontalLayout.addWidget(self.OriginButton)
+        self.OriginButton.setText("get origin")
+
+
         self.BatteryTextLabel = QtWidgets.QLabel(self.gridLayoutWidget)
         self.BatteryTextLabel.setMaximumSize(QtCore.QSize(34, 32))
         self.BatteryTextLabel.setObjectName("BatteryTextLabel")
@@ -216,6 +222,7 @@ class Ui(QtWidgets.QWidget):
         self.portEdit.setText(str(self.drone_client.ws._port))
         self.ipEdit.setText(str(self.drone_client.ws._ip))
 
+        self.OriginButton.clicked.connect(self.get_origin)
         self.ConnectButton.clicked.connect(self.connect)
         self.ArmButton.clicked.connect(self.arm)
         self.ipEdit.textChanged.connect(self.setIp)
@@ -340,6 +347,9 @@ class Ui(QtWidgets.QWidget):
             self.drone_client.disarm()
         else:
             self.drone_client.arm()
+
+    def get_origin(self):
+        print "get origin"
 
     def __del__(self):
         self.drone_client.__del__()

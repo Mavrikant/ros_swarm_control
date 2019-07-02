@@ -12,7 +12,7 @@ from drone_msgs.msg import Diagnostics
 from sensor_msgs.msg import NavSatStatus
 from enum import Enum
 
-mode_list = ("ALTCTL","OFFBOARD", "STABILIZED", "AUTO_RTL", "AUTO_LOITER", "POSCTL")
+mode_list = ("OFFBOARD", "STABILIZED", "AUTO.LAND", "POSCTL")
 
 Color = {"RED": 0,"GREEN": 1, "YELLOW": 2}
 

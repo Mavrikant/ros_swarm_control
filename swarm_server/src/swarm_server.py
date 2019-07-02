@@ -11,7 +11,7 @@ from DroneClient import DroneConnect
 from sensor_msgs.msg import NavSatFix
 import json
 
-mode_list = ("ALTCTL","OFFBOARD", "STABILIZED", "AUTO_RTL", "AUTO_LOITER", "POSCTL")
+mode_list = ("OFFBOARD", "STABILIZED", "AUTO.LAND", "POSCTL")
 common_ip = "127.0.0.1"
 common_port = 9090
 robotsList = list()

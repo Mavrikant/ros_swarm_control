@@ -7,7 +7,6 @@ Panels:
         - /Global Options1
         - /Grid2
         - /Pose 11
-        - /Pose 21
       Splitter Ratio: 0.5
     Tree Height: 728
   - Class: rviz/Selection
@@ -199,6 +198,21 @@ Visualization Manager:
       Radius: 0.10000000149011612
       Reference Frame: <Fixed Frame>
       Value: false
+    - Alpha: 1
+      Axes Length: 1
+      Axes Radius: 0.10000000149011612
+      Class: rviz/Pose
+      Color: 255; 25; 0
+      Enabled: true
+      Head Length: 0.30000001192092896
+      Head Radius: 0.10000000149011612
+      Name: Pose 3
+      Shaft Length: 1
+      Shaft Radius: 0.05000000074505806
+      Shape: Axes
+      Topic: /drone_2/geo/local_pose
+      Unreliable: false
+      Value: true
   Enabled: true
   Global Options:
     Background Color: 238; 238; 236
@@ -227,25 +241,25 @@ Visualization Manager:
   Views:
     Current:
       Class: rviz/ThirdPersonFollower
-      Distance: 6.540195941925049
+      Distance: 8.15471076965332
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.05999999865889549
         Stereo Focal Distance: 1
         Swap Stereo Eyes: false
         Value: false
       Focal Point:
-        X: 0.41332387924194336
-        Y: -1.9909160137176514
+        X: -1.882082223892212
+        Y: 0.5266003608703613
         Z: 1.9097137737844605e-6
       Focal Shape Fixed Size: false
       Focal Shape Size: 0.05000000074505806
       Invert Z Axis: false
       Name: Current View
       Near Clip Distance: 0.009999999776482582
-      Pitch: 1.1897962093353271
+      Pitch: 0.8047947287559509
       Target Frame: map
       Value: ThirdPersonFollower (rviz)
-      Yaw: 3.2391018867492676
+      Yaw: 2.7491090297698975
     Saved: ~
 Window Geometry:
   Displays:

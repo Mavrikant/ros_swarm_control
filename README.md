@@ -32,6 +32,16 @@ Available supervisory control of group with avoiding system based on potential f
 
 2. In **../param/config.yaml** edit formation params of group.
 
+# Dependences
+
+1. Install from apt <br> 
+`
+sudo apt install python-websocket ros-$ROS_DISTRO-rospy-message-converter
+`
+2. install [WebsocketROSClientPython
+](https://github.com/GigaFlopsis/rospy_websocker_client)
+
+
 # Branch:
 * rc_car (for [rc_car_ros](https://github.com/GigaFlopsis/rc_car_ros))
 * px4_drone (for a private project)

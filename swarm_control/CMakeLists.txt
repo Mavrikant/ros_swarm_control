@@ -13,21 +13,24 @@ find_package(catkin REQUIRED COMPONENTS
   std_msgs
   tf
   visualization_msgs
+  message_generation
 )
 
 ## System dependencies are found with CMake's conventions
 # find_package(Boost REQUIRED COMPONENTS system)
+add_message_files(
+  FILES
+    FormationParam.msg
+)
+
+generate_messages(
+  DEPENDENCIES
+  std_msgs
+)
 
 set(CMAKE_AUTOMOC ON)
 set(CMAKE_INCLUDE_CURRENT_DIR ON)
 
-## catkin specific configuration 
-catkin_package(
-#  INCLUDE_DIRS include
-#  LIBRARIES interactive_goal
-#  CATKIN_DEPENDS drone_reg geometry_msgs interactive_marker nav_msgs roscpp std_msgs tf visualization_msgs
-#  DEPENDS system_lib
-)
 
 ## Specify additional locations of header files
 include_directories(

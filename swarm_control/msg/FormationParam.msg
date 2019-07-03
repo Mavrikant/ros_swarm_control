@@ -1,17 +1,15 @@
-byte NO_DATA=0  	# нет данных
-byte RANK=1 		# Ширенга
-byte SQUARE=2		# Квадрат
-byte KLIN=3		# Клин
-byte REVERSE_KLIN=4	# Обратный клин
-byte COLUMN=5		# Колонна
-byte ECHELON=6		# Эшелон
-byte CIRCLE=7		# Круг
+byte NO_DATA=0
+byte RANK=1
+byte SQUARE=2
+byte KLIN=3
+byte REVERSE_KLIN=4
+byte COLUMN=5
+byte ECHELON=6
+byte CIRCLE=7
 
-byte type		# type of formation
+byte type		    # type of formation
 
-int8 leader_id		# id лидера, если -1 лидер не задан
-
+int8 size          # size of robot
+string tag
 float32 distance
-float32 distance_error
 float32[] virtual_formation
-float32[] size_formation

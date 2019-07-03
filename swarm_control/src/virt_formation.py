@@ -1,20 +1,18 @@
 #!/usr/bin/env python
 # coding=utf8
 
-
 import numpy as np
-from swarm_contol.msg import FormationParam
+from swarm_control.msg import FormationParam
 
-
-def create_virtual_structure(n, lengthRTP, widthRTP, formation, alpha=0.0):
+def create_virtual_structure(formation, angle=0.0, length=0., width=0.):
     """
     Функция виртуального построения
     Virtual_formation - массив координат расположения РТП в строю
     x0,y0 - координаты центра виртуального построения
     sizeBuild - размер построния (ширина Х глубина)
-    :param n: количество РТП
-    :param lengthRTP: длина РТП
-    :param widthRTP: ширина РТП
+    :param formation.size: количество РТП
+    :param length: длина РТП
+    :param width: ширина РТП
     :param distance: расстояние между РТП
     :param typeFormation: тип построения, задается от 1 до 7:
                             0-Фаланга RANK=0
@@ -24,32 +22,32 @@ def create_virtual_structure(n, lengthRTP, widthRTP, formation, alpha=0.0):
                             4-Колонна COLUMM=4
                             5-Эшелон ECHELON=5
                             6-Кольцо CIRCLE=6
-    :param alpha: угол поворота виртуального построения
+    :param angle: угол поворота виртуального построения
     :return:
     """
 
-    safety_radius_rtp = np.sqrt((lengthRTP / 2) ** 2 + (widthRTP / 2) ** 2)
+    safety_radius_rtp = np.sqrt((length / 2) ** 2 + (width / 2) ** 2)
 
     sizeBuild = np.zeros((1, 2))
-    Virtual_formation = np.zeros((n, 2))
+    Virtual_formation = np.zeros((formation.size, 2))
 
     if formation.type == FormationParam.RANK and formation.type == FormationParam.NO_DATA:  # Фаланга
         r = formation.distance / 2 + safety_radius_rtp
-        if n == 2:
-            a = 2 * r * n
+        if formation.size == 2:
+            a = 2 * r * formation.size
         else:
-            a = (2 * r) * np.ceil(n / 2)
+            a = (2 * r) * np.ceil(formation.size / 2)
 
-        if n > 4:
+        if formation.size > 4:
             b = 4 * r
         else:
-            b = (2 * r) * np.ceil(n / 2)
+            b = (2 * r) * np.ceil(formation.size / 2)
         # sizeBuild = [a b];
         kx = np.fix((a / (2 * r)))  # количество РТП помещающихся по горизонтали
         ky = np.fix((b / (2 * r))) # количество РТП помещающихся по вертикали
         N = kx * ky  # максимальное количество роботов
         # n = 5;  #n = 12;  # количество роботов вводимые пользователем
-        D = N - n  # разница между максимальным количеством
+        D = N - formation.size  # разница между максимальным количеством
         #            роботов и необходимым, заданным пользователем
         if np.fix(D / kx) > 0:
             ky = ky - np.fix(D / kx)
@@ -61,8 +59,8 @@ def create_virtual_structure(n, lengthRTP, widthRTP, formation, alpha=0.0):
         for j in np.arange(1, ky + 1):
             y = y + dy + np.dot(2, r)
             x = - a / 2 - r  # начало отсчета по х
-            if j == ky and n < N:
-                kx = kx - (N - n)
+            if j == ky and formation.size < N:
+                kx = kx - (N - formation.size)
                 dx = (a - kx * (2 * r)) / (kx + 1)  # расстояние между зонами безопасности РТП
             for i in np.arange(1, kx+1):
                 # x0 = -(a - k*(2*r))/(k+1)/2 - r
@@ -70,21 +68,21 @@ def create_virtual_structure(n, lengthRTP, widthRTP, formation, alpha=0.0):
                 Virtual_formation[k, :] = np.array([x, y])
                 k = k + 1  # абсциса РТП
     elif formation.type == FormationParam.SQUARE:  # Каре - квадрат
-        P = n * (formation.distance + 2 * safety_radius_rtp)
+        P = formation.size * (formation.distance + 2 * safety_radius_rtp)
         b = P / 4
-        if n == 1:
+        if formation.size == 1:
             a = 0
-        elif n == 2:
+        elif formation.size == 2:
             a = b
         else:
             a = b / 2
         # sizeBuild = [2*a 2*a];
         # -->
         visionAngle = np.deg2rad(360)
-        Virtual_formation = np.zeros((n, 2))
+        Virtual_formation = np.zeros((formation.size, 2))
         alpha_0 = np.deg2rad(0)
-        d_alpha = visionAngle / n
-        for i in np.arange(0, n):
+        d_alpha = visionAngle / formation.size
+        for i in np.arange(0, formation.size):
             if np.deg2rad(0) <= alpha_0 < np.deg2rad(45):
                 Virtual_formation[i, :] = np.array([a, a * np.tan(alpha_0)])
             elif np.deg2rad(45) <= alpha_0 < np.deg2rad(135):
@@ -102,12 +100,12 @@ def create_virtual_structure(n, lengthRTP, widthRTP, formation, alpha=0.0):
         d = formation.distance + 2 * safety_radius_rtp
         a = d
         b = d * np.sqrt(3) / 2
-        sizeBuild = np.array([np.fix(n / 2) * a, np.fix(n / 2) * b])
+        sizeBuild = np.array([np.fix(formation.size / 2) * a, np.fix(formation.size / 2) * b])
         k = 0
-        if np.mod(n, 2) == 1:
+        if np.mod(formation.size, 2) == 1:
             Virtual_formation[0, :] = np.array([0, 0])
             k = k + 1
-        for i in np.arange(1, np.fix(n / 2) + 1):
+        for i in np.arange(1, np.fix(formation.size / 2) + 1):
             Virtual_formation[k, :] = np.array([(- i) * a / 2, - i * b])
             k = k + 1
             Virtual_formation[k, :] = np.array([i * a / 2, (- i) * b])
@@ -116,7 +114,7 @@ def create_virtual_structure(n, lengthRTP, widthRTP, formation, alpha=0.0):
         # -->
         Virtual_formation[:, 1] = Virtual_formation[:, 1] + sizeBuild[1] / 2
         # центр клина (при четном количестве РТП центр будет смещен ещё на 1/4)
-        if np.mod(n, 2) == 0:
+        if np.mod(formation.size, 2) == 0:
             # -->
             Virtual_formation[:, 1] = Virtual_formation[:, 1] + b / 2
     elif formation.type == FormationParam.REVERSE_KLIN:
@@ -124,12 +122,12 @@ def create_virtual_structure(n, lengthRTP, widthRTP, formation, alpha=0.0):
         d = formation.distance + 2 * safety_radius_rtp
         a = d
         b = d * np.sqrt(3) / 2
-        sizeBuild = np.array([np.fix(n / 2) * a, np.fix(n / 2) * b])
+        sizeBuild = np.array([np.fix(formation.size / 2) * a, np.fix(formation.size / 2) * b])
         k = 0
-        if np.mod(n, 2) == 1:
+        if np.mod(formation.size, 2) == 1:
             Virtual_formation[0, :] = np.array([0, 0])
             k = k + 1
-        for i in np.arange(1, np.fix(n / 2) + 1):
+        for i in np.arange(1, np.fix(formation.size / 2) + 1):
             Virtual_formation[k, :] = np.array([- i * a / 2, i * b])
             k = k + 1
             Virtual_formation[k, :] = np.array([i * a / 2, i * b])
@@ -139,7 +137,7 @@ def create_virtual_structure(n, lengthRTP, widthRTP, formation, alpha=0.0):
         Virtual_formation[:, 1] = Virtual_formation[:, 1] - sizeBuild[1] / 2
         # центр обратного клина(при четном количестве РТП центр будет смещен
         # ещё на 1/4
-        if np.mod(n, 2) == 0:
+        if np.mod(formation.size, 2) == 0:
             # -->
             Virtual_formation[:, 1] = Virtual_formation[:, 1] - b / 2
     elif formation.type == FormationParam.COLUMN:
@@ -149,25 +147,25 @@ def create_virtual_structure(n, lengthRTP, widthRTP, formation, alpha=0.0):
         # sizeBuild = [a  b];
         # -->
         Virtual_formation[0, :] = np.array([0, 0])
-        for i in np.arange(1, n + 1):
+        for i in np.arange(1, formation.size + 1):
             Virtual_formation[i - 1, :] = np.array([0, - (i - 1) * d])
-        y0 = - (n - 1) * d / 2
+        y0 = - (formation.size - 1) * d / 2
         Virtual_formation[:, 1] = Virtual_formation[:, 1] - y0
     elif formation.type == FormationParam.ECHELON:
         d = formation.distance + 2 * safety_radius_rtp
         a = d
         # sizeBuild = [(n-1)*a+2*widthRTP  b];
         k = 0
-        if np.mod(n, 2) == 1:
+        if np.mod(formation.size, 2) == 1:
             Virtual_formation[0, :] = np.array([0, 0])
             k = k + 1
-            for i in np.arange(1, np.fix(n / 2) + 1):
+            for i in np.arange(1, np.fix(formation.size / 2) + 1):
                 Virtual_formation[k, :] = np.array([np.dot(- i, a), 0])
                 k = k + 1
                 Virtual_formation[k, :] = np.array([np.dot(i, a), 0])
                 k = k + 1
         else:
-            for i in np.arange(0, np.fix(n / 2)):
+            for i in np.arange(0, np.fix(formation.size / 2)):
                 Virtual_formation[k, :] = np.array([- a / 2 - i * a, 0])
                 k = k + 1
                 Virtual_formation[k, :] = np.array([a / 2 + i * a, 0])
@@ -175,21 +173,22 @@ def create_virtual_structure(n, lengthRTP, widthRTP, formation, alpha=0.0):
     elif formation.type == FormationParam.CIRCLE:
         d = formation.distance + 2 * safety_radius_rtp
         # определяется по дуге окружности
-        if n == 1:
+        if formation.size == 1:
             a = 0
-        elif n == 2:
+        elif formation.size == 2:
             a = d / 2
         else:
-            a = d * n / (2 * np.pi)
+            a = d * formation.size / (2 * np.pi)
         # sizeBuild = [2*a  2*a]
         alpha_0 = np.deg2rad(0)
-        scanAngleResolution = np.deg2rad(np.double(360) / n)
+        scanAngleResolution = np.deg2rad(np.double(360) / formation.size)
         visionAngle = np.deg2rad(360)
-        Virtual_formation = np.zeros((n, 2))
+        Virtual_formation = np.zeros((formation.size, 2))
         k = 0
         for i in np.arange(alpha_0, visionAngle + alpha_0, scanAngleResolution):
             Virtual_formation[k, :] = np.array([a * np.cos(i), a * np.sin(i)])
             k = k + 1
+
     # Коррекция размеров виртуальной структуры
     sX = np.max(Virtual_formation[:, 0]) - np.min(Virtual_formation[:, 0])
     sY = np.max(Virtual_formation[:, 1]) - np.min(Virtual_formation[:, 1])
@@ -203,15 +202,15 @@ def create_virtual_structure(n, lengthRTP, widthRTP, formation, alpha=0.0):
     # ----------------------------------------------------
     # поворот виртуальной структуры на угол alpha
     # -----------------------------------------------------
-    if alpha != 0.0:
-        f0 = np.zeros((1, n))
-        r = np.zeros((1, n))
-        for i in np.arange(0, n):
+    if angle != 0.0:
+        f0 = np.zeros((1, formation.size))
+        r = np.zeros((1, formation.size))
+        for i in np.arange(0, formation.size):
             r[:, i] = np.sqrt(Virtual_formation[i, 0] ** 2 + Virtual_formation[i, 1] ** 2)
             f0[:, i] = myAngle_new(Virtual_formation[i, 0], Virtual_formation[i, 1])
 
-        Virtual_formation[:, 0] = np.multiply(r.flatten(), np.cos(f0.flatten() + alpha))
-        Virtual_formation[:, 1] = np.multiply(r.flatten(), np.sin(f0.flatten() + alpha))
+        Virtual_formation[:, 0] = np.multiply(r.flatten(), np.cos(f0.flatten() + angle))
+        Virtual_formation[:, 1] = np.multiply(r.flatten(), np.sin(f0.flatten() + angle))
 
     return Virtual_formation, sizeBuild
 

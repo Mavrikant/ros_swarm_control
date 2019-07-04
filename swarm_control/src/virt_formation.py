@@ -2,7 +2,7 @@
 # coding=utf8
 
 import numpy as np
-from swarm_control.msg import FormationParam
+from swarm_msgs.msg import FormationParam
 
 def create_virtual_structure(formation, angle=0.0, length=0., width=0.):
     """
@@ -117,6 +117,7 @@ def create_virtual_structure(formation, angle=0.0, length=0., width=0.):
         if np.mod(formation.size, 2) == 0:
             # -->
             Virtual_formation[:, 1] = Virtual_formation[:, 1] + b / 2
+
     elif formation.type == FormationParam.REVERSE_KLIN:
         # -->
         d = formation.distance + 2 * safety_radius_rtp
@@ -140,6 +141,7 @@ def create_virtual_structure(formation, angle=0.0, length=0., width=0.):
         if np.mod(formation.size, 2) == 0:
             # -->
             Virtual_formation[:, 1] = Virtual_formation[:, 1] - b / 2
+
     elif formation.type == FormationParam.COLUMN:
         # -->
         d = formation.distance + 2 * safety_radius_rtp
@@ -202,15 +204,14 @@ def create_virtual_structure(formation, angle=0.0, length=0., width=0.):
     # ----------------------------------------------------
     # поворот виртуальной структуры на угол alpha
     # -----------------------------------------------------
-    if angle != 0.0:
-        f0 = np.zeros((1, formation.size))
-        r = np.zeros((1, formation.size))
-        for i in np.arange(0, formation.size):
-            r[:, i] = np.sqrt(Virtual_formation[i, 0] ** 2 + Virtual_formation[i, 1] ** 2)
-            f0[:, i] = myAngle_new(Virtual_formation[i, 0], Virtual_formation[i, 1])
+    f0 = np.zeros((1, formation.size))
+    r = np.zeros((1, formation.size))
+    for i in np.arange(0, formation.size):
+        r[:, i] = np.sqrt(Virtual_formation[i, 0] ** 2 + Virtual_formation[i, 1] ** 2)
+        f0[:, i] = myAngle_new(Virtual_formation[i, 0], Virtual_formation[i, 1])
 
-        Virtual_formation[:, 0] = np.multiply(r.flatten(), np.cos(f0.flatten() + angle))
-        Virtual_formation[:, 1] = np.multiply(r.flatten(), np.sin(f0.flatten() + angle))
+    Virtual_formation[:, 0] = np.multiply(r.flatten(), np.cos(f0.flatten() + angle-np.deg2rad(90)))
+    Virtual_formation[:, 1] = np.multiply(r.flatten(), np.sin(f0.flatten() + angle - np.deg2rad(90)))
 
     return Virtual_formation, sizeBuild
 
@@ -241,5 +242,3 @@ def myAngle_new(dx, dy):
         Angle = 0
 
     return Angle
-
-

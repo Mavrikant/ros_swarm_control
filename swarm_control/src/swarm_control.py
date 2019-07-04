@@ -5,6 +5,7 @@ import math
 import numpy as np
 import sys
 import yaml
+from numpy import format_parser
 
 import rospy
 from drone_msgs.msg import Goal
@@ -12,33 +13,34 @@ from geometry_msgs.msg import Point
 from visualization_msgs.msg import Marker, MarkerArray
 
 from virt_formation import create_virtual_structure
-from swarm_control.msg import FormationParam
+from swarm_msgs.msg import FormationParam
 
 # ---------------------------------------------------------------------------------------------------------------------
 # ---------- Global params
 tag = "drone_"
-max_vel = 0.5
+max_vel = 2
 
-size_of_drone = 0
 
 param_path = "../param/config.yaml"
 
 drone_offset_list = list()  # [name :str, offset :Point, prevPoint: Goal]
 markers_goal = MarkerArray()
+markers_goal_text = MarkerArray()
 markers_lerp = MarkerArray()
+markers_lerp_text = MarkerArray()
 
 state_init_flag = False
 
 # Параметры планировщика
-r_drone = 0.4  # радиус дрона
-r_man = 0.8  # запас на маневр
 r_kor = 0.4  # коридор нулевых сил
-r_porog = r_drone + r_man  # дальность действия поля отталкивания
+r_porog = 1.2  # дальность действия поля отталкивания
 c_rep = 0.4  # коэффициент ф-ии отталкивания
+size_of_drone = 0
 
 use_yaml = False
+goal_common_msgs = Goal()
 
-def setup_market(name, point, id, colorRGBA):
+def setup_market(name, point, id, colorRGBA, text_flag=False):
     """
     Настройка маркера для отображения в rviz
     :type point: Point
@@ -59,17 +61,21 @@ def setup_market(name, point, id, colorRGBA):
     marker.scale.x = 0.2
     marker.scale.y = 0.2
     marker.scale.z = 0.2
-    marker.type = Marker.SPHERE
     marker.color.r = colorRGBA[0]
     marker.color.g = colorRGBA[1]
     marker.color.b = colorRGBA[2]
     marker.color.a = colorRGBA[3]
     marker.pose.position.x = point.x
     marker.pose.position.y = point.y
-    marker.pose.position.z = point.z
+    if text_flag:
+        marker.type = Marker.TEXT_VIEW_FACING
+        marker.text = str(id)
+        marker.pose.position.z = point.z + (marker.scale.z)
+    else:
+        marker.type = Marker.SPHERE
+        marker.pose.position.z = point.z
 
     return marker
-
 
 def rotate_vect(a, b, rot):
     """
@@ -90,7 +96,6 @@ def rotate_vect(a, b, rot):
     val[0] += b[0]
     val[1] += b[1]
     return [val[0][0], val[1][0], a[0]]
-
 
 def speed_limit_goal(new_goal, prev_goal, dt, max_speed):
     """
@@ -119,7 +124,6 @@ def speed_limit_goal(new_goal, prev_goal, dt, max_speed):
     else:
         return new_goal
 
-
 def speed_limit_vec(new_goal, prev_goal, dt, max_speed):
     """
 
@@ -146,7 +150,6 @@ def speed_limit_vec(new_goal, prev_goal, dt, max_speed):
 
     else:
         return new_goal
-
 
 def rep_force(dist_to_obs):
     # вида 1/х
@@ -261,7 +264,7 @@ def load_params_from_path(path):
     :type path: str
     :return:
     """
-    global size_of_drone, drone_offset_list, markers_goal
+    global size_of_drone, drone_offset_list, markers_goal, goal_common_msgs, state_init_flag
 
     try:
         file = open(path, "r")
@@ -270,6 +273,14 @@ def load_params_from_path(path):
     except:
         rospy.logerr("Param error path")
         sys.exit()
+
+
+
+    drone_offset_list = list()
+    markers_goal.markers = list()
+    markers_lerp.markers = list()
+    markers_lerp_text.markers = list()
+    markers_goal_text.markers = list()
 
     # set data "name" and "offset" to list
     size_of_drone = yaml.load(data)['size']
@@ -286,9 +297,16 @@ def load_params_from_path(path):
             new_goal.pose.point.y = offset_data.y
             new_goal.pose.point.z = offset_data.z
 
+            if state_init_flag:
+                new_goal.pose.point.x += goal_common_msgs.pose.point.x
+                new_goal.pose.point.y += goal_common_msgs.pose.point.y
+                new_goal.pose.point.z += goal_common_msgs.pose.point.z
+
             drone_offset_list.append([tag + str(i), offset_data, new_goal])
             markers_goal.markers.append(Marker())
+            markers_goal_text.markers.append(Marker())
             markers_lerp.markers.append(Marker())
+            markers_lerp_text.markers.append(Marker())
         except:
             rospy.logerr("%s:param not found" % (tag + str(i)))
         i += 1
@@ -300,7 +318,7 @@ def load_params(form):
     :type formation: FormationParam
     :return:
     """
-    global size_of_drone, drone_offset_list, markers_goal
+    global size_of_drone, drone_offset_list, markers_goal, state_init_flag, goal_common_msgs
 
     struct, group_size = create_virtual_structure(form)
 
@@ -310,7 +328,8 @@ def load_params(form):
     drone_offset_list = list()
     markers_goal.markers = list()
     markers_lerp.markers = list()
-
+    markers_lerp_text.markers = list()
+    markers_goal_text.markers = list()
     for i in range(size_of_drone):
         # try:
         offset_data = Point()
@@ -322,9 +341,31 @@ def load_params(form):
         new_goal.pose.point.y = offset_data.y
         new_goal.pose.point.z = offset_data.z
 
-        drone_offset_list.append(["drone_" + str(i), offset_data, new_goal])
+        drone_offset_list.append([form.tag + "_" + str(i), offset_data, new_goal])
         markers_goal.markers.append(Marker())
+        markers_goal_text.markers.append(Marker())
         markers_lerp.markers.append(Marker())
+        markers_lerp_text.markers.append(Marker())
+    reset_pose()
+
+def reset_pose():
+    """
+    Reset formation position
+
+    :return:
+    """
+    global drone_offset_list, state_init_flag, goal
+
+    for item in drone_offset_list:
+        i = item
+    #
+    #     drone_offset_list.append([form.tag + "_" + str(i), offset_data, new_goal])
+    #
+    #     new_goal.pose.point.x += goal_common_msgs.pose.point.x
+    #     new_goal.pose.point.y += goal_common_msgs.pose.point.y
+    #     new_goal.pose.point.z += goal_common_msgs.pose.point.z
+
+
 
 if __name__ == '__main__':
     rospy.init_node("swarm_goal_node")
@@ -336,26 +377,33 @@ if __name__ == '__main__':
     max_vel = rospy.get_param("~max_vel", max_vel)
     use_yaml = rospy.get_param("~use_yaml", use_yaml)
 
-    print(param_path)
 
     if use_yaml:
+        print("yaml path:",param_path)
         if param_path == "":
             rospy.logerr("Param not set")
             sys.exit()
 
         load_params_from_path(param_path)
     else:
+        # test
         form = FormationParam()
-        form.type = FormationParam.COLUMN
+        form.type = FormationParam.KLIN
         form.size = 3
-        form.distance = 1
+        form.distance = 2
+        form.tag = "drone"
         load_params(form)
 
 
-    pub_marker_goal_array = rospy.Publisher("/goal_markers", MarkerArray, queue_size=10)
-    pub_marker_goal_lerp_array = rospy.Publisher("/goal_markers_lerp", MarkerArray, queue_size=10)
-
     rospy.Subscriber("/goal_pose", Goal, goal_clb)
+
+
+    # pub markers
+    pub_marker_goal_array = rospy.Publisher("/goal_markers", MarkerArray, queue_size=10)
+    pub_marker_goal_array_text = rospy.Publisher("/goal_markers/text", MarkerArray, queue_size=10)
+    pub_marker_goal_lerp_array = rospy.Publisher("/goal_markers/lerp", MarkerArray, queue_size=10)
+    pub_marker_goal_lerp_text_array = rospy.Publisher("/goal_markers/text", MarkerArray, queue_size=10)
+
 
     rate = rospy.Rate(20)
 
@@ -401,16 +449,25 @@ if __name__ == '__main__':
 
                 markers_lerp.markers[i] = setup_market(name_of_drone,
                                                        lerp_goal.pose.point,
-                                                       i, [0.0, 0.0, 1.0, 1.0])
+                                                       i, [0.0, 0.0, 1.0, 0.7])
+                markers_lerp_text.markers[i] = setup_market(name_of_drone,
+                                                       lerp_goal.pose.point,
+                                                       i, [1.0, 0.0, 0.0, 1.0], text_flag=True)
+
                 markers_goal.markers[i] = setup_market(name_of_drone,
                                                        drone_goal_msgs.pose.point,
                                                        i, [0.0, 1.0, 0.0, 1.0])
 
+                markers_goal_text.markers[i] = setup_market(name_of_drone,
+                                                       drone_goal_msgs.pose.point,
+                                                       i, [0.0, 0.3, 0.0, 1.0], text_flag=True)
                 rospy.Publisher(name_of_drone + "/geo/goal_pose", Goal, queue_size=10).publish(lerp_goal)
 
             # print("len array:", len(drone_offset_list), size_of_drone)
             pub_marker_goal_array.publish(markers_goal)
+            pub_marker_goal_array_text.publish(markers_goal_text)
             pub_marker_goal_lerp_array.publish(markers_lerp)
+            pub_marker_goal_lerp_text_array.publish(markers_lerp_text)
             old_time = rospy.get_time()
 
             rate.sleep()

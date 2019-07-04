@@ -10,6 +10,8 @@ byte CIRCLE=7
 byte type		    # type of formation
 
 int8 size          # size of robot
-string tag
 float32 distance
+
+string tag
+
 float32[] virtual_formation

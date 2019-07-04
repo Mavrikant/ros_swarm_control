@@ -9,7 +9,7 @@ byte CIRCLE=7
 
 byte type		    # type of formation
 
-int8 size          # size of robot
+int8 count          # size of robot
 float32 distance
 
 string tag

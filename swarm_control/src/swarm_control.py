@@ -71,6 +71,17 @@ def set_formation_srv(req):
 
     return FormationResponse(True)
 
+def set_max_vel(req):
+    """set max velocity of group"""
+
+    global max_vel
+    if req.data >= 0.:
+        max_vel = req.data
+        print "set max vel", max_vel
+        return True
+    else:
+        print "set max vel ERROR"
+        return False
 
 
 ### methods
@@ -412,7 +423,8 @@ if __name__ == '__main__':
 
 
     rospy.Subscriber("/goal_pose", Goal, goal_clb)
-    service_form = rospy.Service('swarm_contol/set_fotmation', Formation, set_formation_srv)
+    srv_form = rospy.Service('swarm_contol/set_fotmation', Formation, set_formation_srv)
+    srv_vel = rospy.Service('swarm_contol/set_max_velocity', Float, set_max_vel)
 
     # pub markers
     pub_markers_goal = rospy.Publisher("/goal_markers", MarkerArray, queue_size=10)

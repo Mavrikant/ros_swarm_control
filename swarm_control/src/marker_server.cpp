@@ -43,13 +43,13 @@ Marker makeBox( InteractiveMarker &msg )
   Marker marker;
 
   marker.type = Marker::ARROW;
-  marker.scale.x = msg.scale * 0.45;
-  marker.scale.y = msg.scale * 0.2;
-  marker.scale.z = msg.scale * 0.2;
+  marker.scale.x = msg.scale * 0.75;
+  marker.scale.y = msg.scale * 0.1;
+  marker.scale.z = msg.scale * 0.1;
   marker.color.r = 0.5;
   marker.color.g = 0.0;
   marker.color.b = 0.0;
-  marker.color.a = 1.0;
+  marker.color.a = 0.9;
 
   return marker;
 }

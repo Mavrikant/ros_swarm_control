@@ -43,6 +43,8 @@ state_init_flag = False
 
 
 ### Ros callback
+###
+
 def goal_clb(data):
     """
     Get common goal pose
@@ -54,8 +56,8 @@ def goal_clb(data):
     goal_common_msgs = data
 
     if not state_init_flag:
-        state_init_flag = True
         reset_pose()
+        state_init_flag = True
 
 def set_formation_srv(req):
     """
@@ -216,12 +218,12 @@ def reset_pose():
     for i in range(len(drone_offset_list)):
         offset = drone_offset_list[i][1]
         goal = drone_offset_list[i][2]
+        offset_rot = rotate_point(offset, -goal_common_msgs.pose.course)
 
-        goal.pose.point.x = goal_common_msgs.pose.point.x + offset.x
-        goal.pose.point.y = goal_common_msgs.pose.point.y + offset.y
-        goal.pose.point.z = goal_common_msgs.pose.point.z + offset.z
+        goal.pose.point.x = goal_common_msgs.pose.point.x + offset_rot.x
+        goal.pose.point.y = goal_common_msgs.pose.point.y + offset_rot.y
+        goal.pose.point.z = goal_common_msgs.pose.point.z + offset_rot.z
         drone_offset_list[i][2] = goal
-
 
 
 ### tools
@@ -281,6 +283,27 @@ def rotate_vect(a, b, rot):
     val[0] += b[0]
     val[1] += b[1]
     return [val[0][0], val[1][0], a[0]]
+
+def rotate_point(point, rot):
+    """
+
+    :param point:
+    :param cours:
+    :return:
+    """
+
+    rotate = np.array([[math.cos(-rot), -math.sin(-rot)],
+                       [math.sin(-rot), math.cos(-rot)]])
+
+    pos = np.array([[point.x],
+                    [point.y]])
+    val = np.dot(rotate, pos)
+
+    newPoint = Point()
+    newPoint.x = val[0][0]
+    newPoint.y = val[1][0]
+    newPoint.z = point.z
+    return newPoint
 
 def speed_limit_goal(new_goal, prev_goal, dt, max_speed):
     """

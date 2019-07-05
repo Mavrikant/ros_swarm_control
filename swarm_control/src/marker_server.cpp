@@ -1,5 +1,6 @@
 #include <ros/ros.h>
 #include <interactive_markers/interactive_marker_server.h>
+#include <visualization_msgs/Marker.h>
 #include <tf/transform_broadcaster.h>
 #include <tf/tf.h>
 #include <drone_msgs/Goal.h>
@@ -9,7 +10,7 @@ using namespace drone_msgs;
 
 // Global variables
 boost::shared_ptr<interactive_markers::InteractiveMarkerServer> server;
-ros::Publisher goal_pub;
+
 Goal goal;
 
 double getYawFromQuat(geometry_msgs::Quaternion quat)
@@ -38,7 +39,7 @@ void processFeedback( const visualization_msgs::InteractiveMarkerFeedbackConstPt
   server->applyChanges();
 }
 
-Marker makeBox( InteractiveMarker &msg )
+Marker arrowMarker( InteractiveMarker &msg )
 {
   Marker marker;
 
@@ -49,8 +50,40 @@ Marker makeBox( InteractiveMarker &msg )
   marker.color.r = 0.5;
   marker.color.g = 0.0;
   marker.color.b = 0.0;
-  marker.color.a = 0.9;
+  marker.color.a = 0.8;
+  return marker;
+}
 
+Marker textMarker( Goal &msg )
+{
+  Marker marker;
+
+  std::string text_msg = "           x:" +std::to_string(msg.pose.point.x)+ "\n";
+              text_msg += "           y:" +std::to_string(msg.pose.point.y)+ "\n";
+              text_msg += "           z:" +std::to_string(msg.pose.point.z)+ "\n";
+              text_msg += "           yaw:" +std::to_string(goal.pose.course * 57.2958)+ "\n";
+
+  float _scale = 0.08;
+  marker.header.frame_id = "map";
+  marker.header.stamp = ros::Time::now();
+  marker.ns = "goal_text";
+  marker.type = Marker::TEXT_VIEW_FACING;
+  marker.text =  text_msg;
+  marker.scale.x = _scale;
+  marker.scale.y = _scale;
+  marker.scale.z = _scale;
+  marker.pose.position.x = msg.pose.point.x;
+  marker.pose.position.y = msg.pose.point.y;
+  marker.pose.position.z = msg.pose.point.z;
+
+  marker.pose.position.z += 0.15;
+
+  //marker.pose.orientation.w = 1.;
+
+  marker.color.r = 0.8;
+  marker.color.g = 0.0;
+  marker.color.b = 0.0;
+  marker.color.a = 1.0;
   return marker;
 }
 
@@ -58,7 +91,7 @@ InteractiveMarkerControl& makeBoxControl( InteractiveMarker &msg )
 {
   InteractiveMarkerControl control;
   control.always_visible = true;
-  control.markers.push_back( makeBox(msg) );
+  control.markers.push_back( arrowMarker(msg) );
   msg.controls.push_back( control );
 
   return msg.controls.back();
@@ -93,6 +126,7 @@ void makeQuadrocopterMarker( const tf::Vector3& position)
 
 void goalUpdateCb(Goal goal_)
 {
+  goal = goal_;
   geometry_msgs::Pose pose;
   pose.position.x = goal_.pose.point.x;
   pose.position.y = goal_.pose.point.y;
@@ -109,7 +143,9 @@ int main(int argc, char** argv)
   // Init ROS node
   ros::init(argc, argv, "marker_server");
   ros::NodeHandle n;
-  goal_pub = n.advertise<Goal>("/goal_pose", 1000);
+  ros::Publisher goal_pub = n.advertise<Goal>("/goal_pose", 10);
+  ros::Publisher marker_text_pub = n.advertise<Marker>("/basix_controls/marker_text", 10);
+
   ros::Subscriber goal_sub = n.subscribe("/goal_pose", 10, &goalUpdateCb);
 
   // Init marker server
@@ -122,7 +158,7 @@ int main(int argc, char** argv)
 
   while (ros::ok())
   {
-      goal_pub.publish(goal);
+      marker_text_pub.publish(textMarker(goal));
       ros::spinOnce();
       loop_rate.sleep();
   }

@@ -1,8 +1,7 @@
 <launch>
 
 	<!-- start  marker_server_node -->
-	<node pkg="swarm_control" name="interactive_goals_node" type="marker_server" 	respawn="true" output="screen">
-	</node>
+	<node pkg="swarm_control" name="interactive_goals_node" type="marker_server" 	respawn="true" output="screen"/>
 
 <!--
 	<node pkg="swarm_control" name="swarm_marker_node" type="swarm_control.py" 	respawn="true" output="screen">

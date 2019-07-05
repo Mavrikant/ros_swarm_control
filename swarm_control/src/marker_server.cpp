@@ -160,6 +160,7 @@ int main(int argc, char** argv)
   while (ros::ok())
   {
       marker_text_pub.publish(textMarker(goal));
+      ros::spinOnce();
       loop_rate.sleep();
   }
 

@@ -4,7 +4,7 @@ Panels:
     Name: Displays
     Property Tree Widget:
       Expanded:
-        - /Markers1/Goal lerp text1
+        - /Markers1/Goal pose MarkerArray1
         - /InteractiveMarkers1
       Splitter Ratio: 0.5080645084381104
     Tree Height: 746
@@ -258,25 +258,25 @@ Visualization Manager:
   Views:
     Current:
       Class: rviz/ThirdPersonFollower
-      Distance: 4.822138786315918
+      Distance: 6.569561958312988
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.05999999865889549
         Stereo Focal Distance: 1
         Swap Stereo Eyes: false
         Value: false
       Focal Point:
-        X: 0.42195892333984375
-        Y: -1.1747803688049316
-        Z: 2.327286892978009e-6
+        X: 0.6686321496963501
+        Y: 0.05482947826385498
+        Z: 1.969659024325665e-6
       Focal Shape Fixed Size: false
       Focal Shape Size: 0.05000000074505806
       Invert Z Axis: false
       Name: Current View
       Near Clip Distance: 0.009999999776482582
-      Pitch: 0.7197971343994141
+      Pitch: 1.4897964000701904
       Target Frame: map
       Value: ThirdPersonFollower (rviz)
-      Yaw: 3.5520479679107666
+      Yaw: 4.197092056274414
     Saved: ~
 Window Geometry:
   Displays:

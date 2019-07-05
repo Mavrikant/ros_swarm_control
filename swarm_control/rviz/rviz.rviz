@@ -109,7 +109,16 @@ Visualization Manager:
           Marker Topic: /goal_markers
           Name: Goal pose MarkerArray
           Namespaces:
-            {}
+            drone_0: true
+            drone_1: true
+            drone_2: true
+            drone_3: true
+            drone_4: true
+            drone_5: true
+            drone_6: true
+            drone_7: true
+            drone_8: true
+            drone_9: true
           Queue Size: 10
           Value: true
         - Class: rviz/MarkerArray
@@ -117,7 +126,16 @@ Visualization Manager:
           Marker Topic: /goal_markers/text
           Name: Goal pose text
           Namespaces:
-            {}
+            drone_0: true
+            drone_1: true
+            drone_2: true
+            drone_3: true
+            drone_4: true
+            drone_5: true
+            drone_6: true
+            drone_7: true
+            drone_8: true
+            drone_9: true
           Queue Size: 10
           Value: true
         - Class: rviz/MarkerArray
@@ -125,7 +143,16 @@ Visualization Manager:
           Marker Topic: /goal_markers/lerp
           Name: Goal lerp MarkerArray
           Namespaces:
-            {}
+            drone_0: true
+            drone_1: true
+            drone_2: true
+            drone_3: true
+            drone_4: true
+            drone_5: true
+            drone_6: true
+            drone_7: true
+            drone_8: true
+            drone_9: true
           Queue Size: 10
           Value: true
         - Class: rviz/MarkerArray
@@ -133,7 +160,16 @@ Visualization Manager:
           Marker Topic: /goal_markers/text
           Name: Goal lerp text
           Namespaces:
-            {}
+            drone_0: true
+            drone_1: true
+            drone_2: true
+            drone_3: true
+            drone_4: true
+            drone_5: true
+            drone_6: true
+            drone_7: true
+            drone_8: true
+            drone_9: true
           Queue Size: 10
           Value: true
       Enabled: true
@@ -273,10 +309,10 @@ Visualization Manager:
       Invert Z Axis: false
       Name: Current View
       Near Clip Distance: 0.009999999776482582
-      Pitch: 1.4897964000701904
+      Pitch: 0.41979673504829407
       Target Frame: map
       Value: ThirdPersonFollower (rviz)
-      Yaw: 4.197092056274414
+      Yaw: 4.2920942306518555
     Saved: ~
 Window Geometry:
   Displays:

@@ -13,7 +13,7 @@ from geometry_msgs.msg import Point
 from visualization_msgs.msg import Marker, MarkerArray
 
 from virt_formation import create_virtual_structure
-from swarm_msgs.msg import FormationParam
+from swarm_msgs.msg import FormationParam, CommonParams
 from swarm_msgs.srv import *
 
 # ---------------------------------------------------------------------------------------------------------------------
@@ -23,10 +23,11 @@ max_vel = 1.0
 use_yaml = False
 
 # Параметры планировщика
+use_field = True
+allow_z_field = True
 r_safe = 1.2  # дальность действия поля отталкивания
-
 r_kor = 0.4  # коридор нулевых сил
-c_rep = 0.4  # коэффициент ф-ии отталкивания
+force_rep = 0.4  # коэффициент ф-ии отталкивания
 
 size_of_drone = 0
 
@@ -41,6 +42,8 @@ markers_lerp_text = MarkerArray()
 goal_common_msgs = Goal()
 state_init_flag = False
 
+
+formation = FormationParam()
 
 ### Ros callback
 ###
@@ -65,13 +68,43 @@ def set_formation_srv(req):
     :param req:
     :return:
     """
+    global formation
     print "get form", req
+    if req.formation.tag != "":
+        formation = req.formation
+        load_params(req.formation)
+        reset_pose()
+        print ("DONE: change formation")
 
-    load_params(req.formation)
-    reset_pose()
-    print ("change formation")
+        return True
+    else:
+        print ("ERROR: change formation")
 
-    return FormationResponse(True)
+        return False
+
+
+def set_field_srv(req):
+    """
+    Service callback of set field
+    :param req:
+    :return:
+    """
+    global use_field, allow_z_field, r_safe, force_rep
+    print "set field param", req
+    try:
+        req = FieldSrvRequest()
+        allow_z_field = req.field.allow_z_field
+        use_field = req.field.use_field
+        force_rep = req.field.force_rep
+        r_safe = req.field.r_safe
+
+        print ("DONE: change field param")
+
+        return True
+    except:
+        return False
+
+
 
 def set_max_vel(req):
     """set max velocity of group"""
@@ -90,7 +123,7 @@ def set_max_vel(req):
 
 def rep_force(dist_to_obs):
     # вида 1/х
-    return c_rep / dist_to_obs - c_rep / r_safe
+    return force_rep / dist_to_obs - force_rep / r_safe
 
 def repel_from_near(lerp_point, drone_num, course, radius=1.0):
     """
@@ -427,6 +460,8 @@ if __name__ == '__main__':
     param_path = rospy.get_param("~path", param_path)
     r_safe = rospy.get_param("~r_safe", r_safe)
     max_vel = rospy.get_param("~max_vel", max_vel)
+    use_field = rospy.get_param("~use_field", use_field)
+    allow_z_field = rospy.get_param("~allow_z_field", allow_z_field)
 
     if use_yaml:
         print("yaml path:",param_path)
@@ -437,17 +472,19 @@ if __name__ == '__main__':
         load_params_from_path(param_path)
     else:
         # test
-        form = FormationParam()
-        form.type = FormationParam.CIRCLE
-        form.count = 10
-        form.distance = 1.5
-        form.tag = "drone"
-        load_params(form)
+        formation.type = FormationParam.CIRCLE
+        formation.count = 10
+        formation.distance = 1.5
+        formation.tag = "drone"
+        load_params(formation)
 
 
     rospy.Subscriber("/goal_pose", Goal, goal_clb)
-    srv_form = rospy.Service('swarm_contol/set_fotmation', Formation, set_formation_srv)
-    srv_vel = rospy.Service('swarm_contol/set_max_velocity', Float, set_max_vel)
+    srv_form = rospy.Service('swarm_contol/set_fotmation', FormationSrv, set_formation_srv)
+    srv_field = rospy.Service('swarm_contol/set_field', FieldSrv, set_field_srv)
+    srv_vel = rospy.Service('swarm_contol/set_max_velocity', FloatSrv, set_max_vel)
+
+    pub_params = rospy.Publisher("swarm_contol/state", CommonParams, queue_size=10)
 
     # pub markers
     pub_markers_goal = rospy.Publisher("/goal_markers", MarkerArray, queue_size=10)
@@ -461,6 +498,7 @@ if __name__ == '__main__':
     _drone_goal_msgs = Goal()
     old_time = rospy.get_time()
 
+    common_params = CommonParams()
     try:
         while not rospy.is_shutdown():
             if not state_init_flag:
@@ -489,11 +527,13 @@ if __name__ == '__main__':
                     course = get_course(_drone_goal_msgs, lerp_goal)
 
                     # отталкиваемся от соседей
-                    repel_vec = speed_limit_vec(repel_from_near(lerp_goal, i, course, r_safe), [0, 0, 0], dt, max_vel)
-                    repel_rot_vec = rotate_vect(repel_vec, [0, 0, 0], np.deg2rad(-25))
-                    lerp_goal.pose.point.x += repel_rot_vec[0]
-                    lerp_goal.pose.point.y += repel_rot_vec[1]
-                    lerp_goal.pose.point.z += repel_rot_vec[2]
+                    if use_field:
+                        repel_vec = speed_limit_vec(repel_from_near(lerp_goal, i, course, r_safe), [0, 0, 0], dt, max_vel)
+                        repel_rot_vec = rotate_vect(repel_vec, [0, 0, 0], np.deg2rad(-25))
+                        lerp_goal.pose.point.x += repel_rot_vec[0]
+                        lerp_goal.pose.point.y += repel_rot_vec[1]
+                        if allow_z_field:
+                            lerp_goal.pose.point.z += repel_rot_vec[2]
                     # указываем интерполированную точку как предыдущую
                     drone_offset_list[i][2] = lerp_goal
 
@@ -519,6 +559,16 @@ if __name__ == '__main__':
             pub_markers_goal_text.publish(markers_goal_text)
             pub_markers_goal_lerp.publish(markers_lerp)
             pub_markers_goal_lerp_text.publish(markers_lerp_text)
+
+            # pub params
+            common_params.formation = formation
+            common_params.max_vel = max_vel
+            common_params.field.allow_z_field = allow_z_field
+            common_params.field.use_field = use_field
+            common_params.field.force_rep = force_rep
+            common_params.field.r_safe = r_safe
+
+            pub_params.publish(common_params)
 
             old_time = rospy.get_time()
             rate.sleep()

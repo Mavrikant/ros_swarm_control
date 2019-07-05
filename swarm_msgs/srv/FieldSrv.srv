@@ -1,0 +1,3 @@
+swarm_msgs/FieldParam field
+---
+bool status

@@ -245,11 +245,6 @@ class Ui(QtWidgets.QWidget):
         self.changeComboBox(diag_data.mode)
         self.Batterylabel.setText('{0:.0%}'.format(diag_data.battery))
 
-        if self.ready_to_start:
-            self._changeColorStateOfItem(Color["GREEN"])
-        else:
-            self._changeColorStateOfItem(Color["YELLOW"])
-
         if diag_data.gps_send:
             text = ""
             if diag_data.status.status == NavSatStatus.STATUS_FIX:
@@ -282,9 +277,11 @@ class Ui(QtWidgets.QWidget):
                 and diag_data.init_origin \
                 and diag_data.status.status == NavSatStatus.STATUS_FIX:
             self.ready_to_start = True
+            self._changeColorStateOfItem(Color["GREEN"])
+
         else:
             self.ready_to_start = False
-
+            self._changeColorStateOfItem(Color["YELLOW"])
 
     def _changeConnect(self, state):
 

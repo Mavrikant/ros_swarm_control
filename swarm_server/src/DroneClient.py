@@ -95,6 +95,10 @@ class DroneConnect(QObject):
         print("set origin")
         self.ws.publish(topic, data)
 
+    def send_receive_signal(self, topic, data):
+        print("send receive signal")
+        self.ws.publish(topic, data)
+
     def arm(self):
         arm_state = CommandBoolRequest()
         arm_state.value = True

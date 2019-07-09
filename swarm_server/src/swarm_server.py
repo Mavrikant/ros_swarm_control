@@ -9,6 +9,7 @@ from PyQt5.QtCore import QObject, pyqtSignal,  QRunnable, QThread, QThreadPool, 
 import DroneUI, window
 from DroneClient import DroneConnect
 from sensor_msgs.msg import NavSatFix
+from std_msgs.msg import Empty, String
 import json
 
 mode_list = ("OFFBOARD", "STABILIZED", "AUTO.LAND", "POSCTL")
@@ -21,6 +22,14 @@ tag = "drone_"
 origin_topic = '/geo/set_origin'
 origin_pose = NavSatFix()
 abortFlag = False
+
+
+def send_receive_signal():
+    "Sending a empty message"
+    msgs = Empty()
+    for drone in robotsList:
+        if drone.is_active():
+            drone.send_receive_signal("drone/receive", String())
 
 class WindowApp(QtWidgets.QMainWindow, window.Ui_Form):
     def __init__(self):
@@ -262,13 +271,15 @@ class ROS_run(QObject):
 
     @pyqtSlot()
     def run(self):
-        rate = rospy.Rate(20)
+        rate = rospy.Rate(2)
         try:
             while not rospy.is_shutdown() and not abortFlag:
-
+                send_receive_signal()
                 rate.sleep()
         except:
             pass
+
+
 
 if __name__ == '__main__':
     rospy.init_node('swarm_server_node', anonymous=True)

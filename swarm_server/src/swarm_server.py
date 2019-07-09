@@ -38,8 +38,9 @@ class WindowApp(QtWidgets.QMainWindow, window.Ui_Form):
         self.ConnectAllButton.clicked.connect(self.ConnectAll)
         self.DisconnectAllButton.clicked.connect(self.DisconnectAll)
 
-        self.ModeAllComboBox.addItems(mode_list)
-        self.ModeAllComboBox.activated[str].connect(self.setAllMode)
+        self.ModeButton_OFFBOARD.clicked.connect(self.setModeOffboard)
+        self.ModeButton_STAB.clicked.connect(self.setModeStab)
+        self.ModeButton_LAND.clicked.connect(self.setModeLand)
 
         self.OriginPushButton.clicked.connect(self.setOrigin)
         self.LatSpinBox.valueChanged.connect(self._changeOrigin)
@@ -203,6 +204,16 @@ class WindowApp(QtWidgets.QMainWindow, window.Ui_Form):
             drone = self.listOfDrones.itemWidget(self.listOfDrones.item(i))
             drone.setMode(mode)
             drone.changeComboBox(mode)
+
+    def setModeOffboard(self):
+        self.setAllMode("OFFBOARD")
+
+    def setModeStab(self):
+        self.setAllMode("STABILIZED")
+
+    def setModeLand(self):
+        self.setAllMode("AUTO.LAND")
+
 
     def addItems(self):
         """

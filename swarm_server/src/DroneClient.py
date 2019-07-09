@@ -26,12 +26,12 @@ class DroneConnect(QObject):
         self.ip = websocket_ip
         self.port = port
         self.ws = ros_ws.ws_client(self.ip, self.port)
-        self.ws.subscribe('/mavros/local_position/pose', PoseStamped(), name+"/local/pose", rate=5.0, queue_length=10)
-        self.ws.subscribe('/geo/local_pose', PoseStamped(),name+"/geo/local_pose", rate=10.0, queue_length=10)
-        self.ws.subscribe('/drone/diagnostics', Diagnostics(), name+"/diagnostics", rate=5.0, queue_length=10)
-        self.ws.subscribe('/mavros/global_position/global', NavSatFix(), name+"/global/pose", rate=5.0, queue_length=10)
+        self.ws.subscribe('/mavros/local_position/pose', PoseStamped(), name+"/local/pose", rate=5.0, queue_length=1)
+        self.ws.subscribe('/geo/local_pose', PoseStamped(),name+"/geo/local_pose", rate=10.0, queue_length=1)
+        self.ws.subscribe('/drone/diagnostics', Diagnostics(), name+"/diagnostics", rate=5.0, queue_length=1)
+        self.ws.subscribe('/mavros/global_position/global', NavSatFix(), name+"/global/pose", rate=5.0, queue_length=1)
 
-        # Ros subscribe
+        # Ros subscribes
         self.sub_diagnoctics = rospy.Subscriber(name+"/diagnostics", Diagnostics, self.clb_diag)
         self.sub_geo_goal = rospy.Subscriber(name+"/geo/goal_pose", Goal, self.goal_clb_global)
         # self.sub_goal = rospy.Subscriber(name+"/local/goal_pose", PoseStamped, self.goal_clb_local)

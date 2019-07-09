@@ -37,6 +37,31 @@ class Ui_Form(object):
         self.paramHorizontalLayout.addWidget(self.SaveParamsButton)
         spacerItem = QtWidgets.QSpacerItem(40, 20, QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Minimum)
         self.paramHorizontalLayout.addItem(spacerItem)
+
+        self.ModeButton_OFFBOARD = QtWidgets.QPushButton(self.verticalLayoutWidget)
+        sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Fixed, QtWidgets.QSizePolicy.Fixed)
+        sizePolicy.setHorizontalStretch(32)
+        sizePolicy.setVerticalStretch(0)
+        sizePolicy.setHeightForWidth(self.ModeButton_OFFBOARD.sizePolicy().hasHeightForWidth())
+        self.ModeButton_OFFBOARD.setSizePolicy(sizePolicy)
+        self.ModeButton_OFFBOARD.setMinimumSize(QtCore.QSize(16, 0))
+        self.ModeButton_OFFBOARD.setMaximumSize(QtCore.QSize(64, 16777215))
+        self.ModeButton_OFFBOARD.setObjectName("ModeButton_OFFBOARD")
+        self.paramHorizontalLayout.addWidget(self.ModeButton_OFFBOARD)
+
+        self.ModeButton_LAND = QtWidgets.QPushButton(self.verticalLayoutWidget)
+        self.ModeButton_LAND.setMaximumSize(QtCore.QSize(64, 16777215))
+        self.ModeButton_LAND.setObjectName("ModeButton_LAND")
+        self.paramHorizontalLayout.addWidget(self.ModeButton_LAND)
+
+        self.ModeButton_STAB = QtWidgets.QPushButton(self.verticalLayoutWidget)
+        self.ModeButton_STAB.setMaximumSize(QtCore.QSize(64, 16777215))
+        self.ModeButton_STAB.setObjectName("ModeButton_STAB")
+        self.paramHorizontalLayout.addWidget(self.ModeButton_STAB)
+
+        spacerItem1 = QtWidgets.QSpacerItem(150, 20, QtWidgets.QSizePolicy.Minimum, QtWidgets.QSizePolicy.Minimum)
+        self.paramHorizontalLayout.addItem(spacerItem1)
+
         self.verticalLayout.addLayout(self.paramHorizontalLayout)
         self.MenuhorizontalLayout = QtWidgets.QHBoxLayout()
         self.MenuhorizontalLayout.setObjectName("MenuhorizontalLayout")
@@ -46,7 +71,7 @@ class Ui_Form(object):
         sizePolicy.setVerticalStretch(32)
         sizePolicy.setHeightForWidth(self.SelectAllcheckBox.sizePolicy().hasHeightForWidth())
         self.SelectAllcheckBox.setSizePolicy(sizePolicy)
-        self.SelectAllcheckBox.setMaximumSize(QtCore.QSize(24, 24))
+        self.SelectAllcheckBox.setMaximumSize(QtCore.QSize(32, 24))
         self.SelectAllcheckBox.setShortcut("")
         self.SelectAllcheckBox.setCheckable(False)
         self.SelectAllcheckBox.setObjectName("SelectAllcheckBox")
@@ -59,9 +84,12 @@ class Ui_Form(object):
         self.MenuhorizontalLayout.addWidget(self.DisconnectAllButton )
         spacerItem1 = QtWidgets.QSpacerItem(40, 20, QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Minimum)
         self.MenuhorizontalLayout.addItem(spacerItem1)
-        self.ModeAllComboBox = QtWidgets.QComboBox(self.verticalLayoutWidget)
-        self.ModeAllComboBox.setObjectName("ModeAllComboBox")
-        self.MenuhorizontalLayout.addWidget(self.ModeAllComboBox)
+
+        # self.ModeAllComboBox = QtWidgets.QComboBox(self.verticalLayoutWidget)
+        # self.ModeAllComboBox.setObjectName("ModeAllComboBox")
+        # self.MenuhorizontalLayout.addWidget(self.ModeAllComboBox)
+
+
         self.ArmAllButton = QtWidgets.QPushButton(self.verticalLayoutWidget)
         self.ArmAllButton.setObjectName("ArmAllButton")
         self.MenuhorizontalLayout.addWidget(self.ArmAllButton)
@@ -69,6 +97,10 @@ class Ui_Form(object):
         self.DisarmAllButton.setObjectName("DisarmAllButton")
         self.MenuhorizontalLayout.addWidget(self.DisarmAllButton)
         self.verticalLayout.addLayout(self.MenuhorizontalLayout)
+
+
+
+
         self.listOfDrones = QtWidgets.QListWidget(self.verticalLayoutWidget)
         self.listOfDrones.setObjectName("listOfDrones")
         self.listOfDrones.setHorizontalScrollBarPolicy(QtCore.Qt.ScrollBarAlwaysOff)
@@ -132,7 +164,6 @@ class Ui_Form(object):
         self.label_6.setText(_translate("Form", "Params:"))
         self.LoadParamsButton.setText(_translate("Form", "open"))
         self.SaveParamsButton.setText(_translate("Form", "save"))
-        self.SelectAllcheckBox.setText(_translate("Form", "CheckBox"))
         self.ConnectAllButton.setText(_translate("Form", "connect"))
         self.DisconnectAllButton.setText(_translate("Form", "Disconnect"))
         self.ArmAllButton.setText(_translate("Form", "Arm"))
@@ -144,3 +175,6 @@ class Ui_Form(object):
         self.label.setText(_translate("Form", "Lat:"))
         self.OriginPushButton.setText(_translate("Form", "Set origin"))
 
+        self.ModeButton_OFFBOARD.setText(_translate("Form", "OFFBRD"))
+        self.ModeButton_STAB.setText(_translate("Form", "STAB"))
+        self.ModeButton_LAND.setText(_translate("Form", "LAND"))

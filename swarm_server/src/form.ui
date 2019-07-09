@@ -77,6 +77,73 @@
         </property>
        </spacer>
       </item>
+      <item>
+       <widget class="QPushButton" name="ModeButton_OFFBOARD">
+        <property name="sizePolicy">
+         <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+          <horstretch>32</horstretch>
+          <verstretch>0</verstretch>
+         </sizepolicy>
+        </property>
+        <property name="minimumSize">
+         <size>
+          <width>16</width>
+          <height>0</height>
+         </size>
+        </property>
+        <property name="maximumSize">
+         <size>
+          <width>64</width>
+          <height>16777215</height>
+         </size>
+        </property>
+        <property name="text">
+         <string>OFFBRD</string>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QPushButton" name="ModeButton_STAB">
+        <property name="maximumSize">
+         <size>
+          <width>64</width>
+          <height>16777215</height>
+         </size>
+        </property>
+        <property name="text">
+         <string>STAB</string>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QPushButton" name="ModeButton_LAND">
+        <property name="maximumSize">
+         <size>
+          <width>64</width>
+          <height>16777215</height>
+         </size>
+        </property>
+        <property name="text">
+         <string>LAND</string>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <spacer name="horizontalSpacer_4">
+        <property name="orientation">
+         <enum>Qt::Horizontal</enum>
+        </property>
+        <property name="sizeType">
+         <enum>QSizePolicy::Minimum</enum>
+        </property>
+        <property name="sizeHint" stdset="0">
+         <size>
+          <width>150</width>
+          <height>20</height>
+         </size>
+        </property>
+       </spacer>
+      </item>
      </layout>
     </item>
     <item>
@@ -96,7 +163,7 @@
          </size>
         </property>
         <property name="text">
-         <string>CheckBox</string>
+         <string/>
         </property>
         <property name="shortcut">
          <string notr="true"/>
@@ -114,6 +181,13 @@
        </widget>
       </item>
       <item>
+       <widget class="QPushButton" name="DisconnectAllButton">
+        <property name="text">
+         <string>disconnect</string>
+        </property>
+       </widget>
+      </item>
+      <item>
        <spacer name="horizontalSpacer">
         <property name="orientation">
          <enum>Qt::Horizontal</enum>
@@ -127,10 +201,13 @@
        </spacer>
       </item>
       <item>
-       <widget class="QComboBox" name="ModeAllComboBox"/>
-      </item>
-      <item>
        <widget class="QPushButton" name="ArmAllButton">
+        <property name="maximumSize">
+         <size>
+          <width>64</width>
+          <height>16777215</height>
+         </size>
+        </property>
         <property name="text">
          <string>Arm</string>
         </property>
@@ -138,6 +215,12 @@
       </item>
       <item>
        <widget class="QPushButton" name="DisarmAllButton">
+        <property name="maximumSize">
+         <size>
+          <width>64</width>
+          <height>16777215</height>
+         </size>
+        </property>
         <property name="text">
          <string>Disarm</string>
         </property>

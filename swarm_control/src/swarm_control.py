@@ -24,7 +24,7 @@ use_yaml = False
 
 # Параметры планировщика
 use_field = True
-allow_z_field = True
+allow_z_field = False
 r_safe = 1.2  # дальность действия поля отталкивания
 r_kor = 0.4  # коридор нулевых сил
 force_rep = 0.4  # коэффициент ф-ии отталкивания
@@ -472,9 +472,9 @@ if __name__ == '__main__':
         load_params_from_path(param_path)
     else:
         # test
-        formation.type = FormationParam.CIRCLE
-        formation.count = 10
-        formation.distance = 1.5
+        formation.type = FormationParam.KLIN
+        formation.count = 3
+        formation.distance = 3.0
         formation.tag = "drone"
         load_params(formation)
 
@@ -493,7 +493,7 @@ if __name__ == '__main__':
     pub_markers_goal_lerp_text = rospy.Publisher("/goal_markers/text", MarkerArray, queue_size=10)
 
 
-    rate = rospy.Rate(20)
+    rate = rospy.Rate(10)
 
     _drone_goal_msgs = Goal()
     old_time = rospy.get_time()
@@ -551,7 +551,7 @@ if __name__ == '__main__':
                     markers_goal_text.markers[i] = setup_market(name_of_drone,
                                                                 _drone_goal_msgs.pose.point,
                                                                 i, [0.0, 0.3, 0.0, 1.0], text_flag=True)
-                    rospy.Publisher(name_of_drone + "/geo/goal_pose", Goal, queue_size=10).publish(lerp_goal)
+                    rospy.Publisher(name_of_drone + "/geo/goal_pose", Goal, queue_size=1).publish(lerp_goal)
             except:
                 print "error len"
             # publish to RVIZ

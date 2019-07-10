@@ -6,6 +6,7 @@ import numpy as np
 import sys
 import yaml
 from numpy import format_parser
+import copy
 
 import rospy
 from drone_msgs.msg import Goal
@@ -92,14 +93,11 @@ def set_field_srv(req):
     global use_field, allow_z_field, r_safe, force_rep
     print "set field param", req
     try:
-        req = FieldSrvRequest()
         allow_z_field = req.field.allow_z_field
         use_field = req.field.use_field
         force_rep = req.field.force_rep
         r_safe = req.field.r_safe
-
         print ("DONE: change field param")
-
         return True
     except:
         return False
@@ -211,11 +209,14 @@ def load_params(form):
     :return:
     """
     global size_of_drone, drone_offset_list, markers_goal, state_init_flag, goal_common_msgs
-    drone_offset_list = list()
-    markers_goal.markers = list()
-    markers_lerp.markers = list()
-    markers_lerp_text.markers = list()
-    markers_goal_text.markers = list()
+
+    del drone_offset_list[:]
+    del markers_goal.markers[:]
+    del markers_lerp.markers[:]
+    del markers_lerp_text.markers[:]
+    del markers_goal_text.markers[:]
+
+
     size_of_drone = 0
     struct, group_size = create_virtual_structure(form)
 
@@ -239,6 +240,7 @@ def load_params(form):
         markers_goal_text.markers.append(Marker())
         markers_lerp.markers.append(Marker())
         markers_lerp_text.markers.append(Marker())
+
 
 def reset_pose():
     """
@@ -270,7 +272,7 @@ def setup_market(name, point, id, colorRGBA, text_flag=False):
     marker = Marker()
     marker.header.frame_id = "/map"
     marker.header.stamp = rospy.get_rostime()
-    marker.ns = name
+    marker.ns = "marker"; #  name
     marker.id = id
     marker.action = 0
     marker.pose.orientation.x = 0

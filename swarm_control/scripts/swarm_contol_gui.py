@@ -4,13 +4,14 @@
 import sys
 import rospy
 
-from PyQt5 import QtWidgets, QtGui
-from PyQt5.QtCore import QObject, pyqtSignal,  QRunnable, QThread, QThreadPool, pyqtSlot, Qt
+from PyQt5 import QtWidgets
+from PyQt5.QtCore import QObject, pyqtSignal, QThread, pyqtSlot, QTimer
 import window
 
 from swarm_msgs.msg import FormationParam, FieldParam, CommonParams
 from swarm_msgs.srv import *
-
+import signal
+signal.signal(signal.SIGINT, signal.SIG_DFL)
 
 common_param = CommonParams()
 
@@ -250,22 +251,6 @@ class WindowApp(QtWidgets.QMainWindow, window.Ui_Form):
         self.initSignals()
 
 
-class ROS_run(QObject):
-    # def __init__(self):
-    #     super(ROS_run, self).__init_()
-    #     print("thead ros start")
-
-    @pyqtSlot()
-    def run(self):
-        global param_sub
-        param_sub = rospy.Subscriber("swarm_contol/state", CommonParams, common_clb)
-
-        rate = rospy.Rate(2)
-        try:
-            while not rospy.is_shutdown() and not abortFlag:
-                rate.sleep()
-        except:
-            pass
 
 ### ROS callback
 
@@ -280,10 +265,31 @@ def common_clb(data):
     print "get data"
     signals.callback.emit()
 
+class ROS_run(QObject):
+    # def __init__(self):
+    #     super(ROS_run, self).__init_()
+    #     print("thead ros start")
 
+    @pyqtSlot()
+    def run(self):
+        global param_sub
+        param_sub = rospy.Subscriber("swarm_contol/state", CommonParams, common_clb)
+
+        rospy.spin()
+
+
+def sigint_handler(*args):
+    """Handler for the SIGINT signal."""
+    global abortFlag
+    sys.stderr.write('\r')
+    abortFlag = True
+    app.quit()
+
+abortFlag = False
 
 if __name__ == '__main__':
-    rospy.init_node('swarm_server_gui_node', anonymous=True)
+    rospy.init_node('swarm_contol_gui_node', anonymous=True)
+    signal.signal(signal.SIGINT, sigint_handler)
 
     # run ros thread
     ros_t = QThread()
@@ -294,7 +300,12 @@ if __name__ == '__main__':
 
     # run main
     app = QtWidgets.QApplication(sys.argv)  # Новый экземпляр QApplication
+
+    timer = QTimer()
+    timer.start(500)  # You may change this if you wish.
+    timer.timeout.connect(lambda: None)  # Let the interpreter run each 500 ms.
+
     window = WindowApp()  # Создаём объект класса ExampleApp
     window.show()  # Показываем окно
-    app.exec_()  # и запускаем приложение
+    sys.exit(app.exec_())
     abortFlag = True

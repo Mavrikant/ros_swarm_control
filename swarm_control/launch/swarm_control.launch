@@ -8,7 +8,9 @@
 		<param name="max_vel" value="0.5"/>
 		<param name="r_safe" value="1.5"/>
 	</node>
-
+	
+	<node pkg="swarm_control" name="swarm_contol_gui" type="swarm_contol_gui.py" 	respawn="true" output="screen">
+	</node>
 	<!--rviz-->
 	<node name="rviz" pkg="rviz" type="rviz" required="true"
 		args="-d $(find swarm_control)/rviz/rviz.rviz" />

@@ -5,12 +5,14 @@ import sys
 import rospy
 
 from PyQt5 import QtWidgets, QtGui
-from PyQt5.QtCore import QObject, pyqtSignal,  QRunnable, QThread, QThreadPool, pyqtSlot, Qt
+from PyQt5.QtCore import QObject, pyqtSignal,  QRunnable, QThread, QThreadPool, pyqtSlot, Qt, QTimer
 import DroneUI, window
 from DroneClient import DroneConnect
 from sensor_msgs.msg import NavSatFix
 from std_msgs.msg import Empty, String
 import json
+import signal
+signal.signal(signal.SIGINT, signal.SIG_DFL)
 
 mode_list = ("OFFBOARD", "STABILIZED", "AUTO.LAND", "POSCTL")
 common_ip = "127.0.0.1"
@@ -276,13 +278,24 @@ class ROS_run(QObject):
             while not rospy.is_shutdown() and not abortFlag:
                 send_receive_signal()
                 rate.sleep()
-        except:
-            pass
+            app.exit()
+        except rospy.ROSInterruptException:
+            print "ROSInterruptException EXIT"
+            app.exit()
 
 
+def sigint_handler(*args):
+    """Handler for the SIGINT signal."""
+    global abortFlag
+    sys.stderr.write('\r')
+    abortFlag = True
+    app.quit()
+
+abortFlag = False
 
 if __name__ == '__main__':
     rospy.init_node('swarm_server_node', anonymous=True)
+    signal.signal(signal.SIGINT, sigint_handler)
 
     # run ros thread
     ros_t = QThread()
@@ -293,7 +306,13 @@ if __name__ == '__main__':
 
     # run main
     app = QtWidgets.QApplication(sys.argv)  # Новый экземпляр QApplication
+
+    timer = QTimer()
+    timer.start(500)  # You may change this if you wish.
+    timer.timeout.connect(lambda: None)  # Let the interpreter run each 500 ms.
+
     window = WindowApp()  # Создаём объект класса ExampleApp
     window.show()  # Показываем окно
-    app.exec_()  # и запускаем приложение
+    sys.exit(app.exec_())
     abortFlag = True
+
